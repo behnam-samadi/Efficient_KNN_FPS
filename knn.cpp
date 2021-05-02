@@ -57,13 +57,6 @@ class Frame{
     vector<vector<float>> data;
 };
 
-void * call_thread (void* args){
-    arguments = ((arg_to_thread*) args);
-    vector<vector<int>> knn = KNN(arguments.reference, arguments.query, arguments.K, arguments.num_ref);
-    return 
-}
-
-
 struct thread_data
 {
     Frame query;
@@ -72,6 +65,11 @@ struct thread_data
     int num_ref;
     vector<vector<int>> result;
 };
+
+
+
+
+
 
 Frame read_data (string file_adress, int points_dim, int output_dims)
 { 
@@ -117,11 +115,17 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K, int num_query=0){
 return(result);
 }
 
+void * call_thread (void* args){
+    thread_data arguments = *((thread_data*) args);
+    vector<vector<int>> knn = KNN(arguments.reference, arguments.query, arguments.K, arguments.num_ref);
+    ((thread_data*)args)->result = knn;
+}
+
 
 int main(){
-    
-    Frame frame1 = read_data("0000000000.bin", 4, 3);
-    Frame frame2 = read_data("0000000001.bin", 4, 3);
+    int frame_channels = 3;
+    Frame frame1 = read_data("0000000000.bin", 4, frame_channels);
+    Frame frame2 = read_data("0000000001.bin", 4, frame_channels);
     cout<<"two frames created\n";
     int i = frame1.data.size();
     int j = frame1.data[0].size();
@@ -139,9 +143,34 @@ int main(){
     std::vector<float> v2 = {4,6,3};
     cout<<"\n"<<"distance: "<<calc_distance(v1,v2, "Manhattan");
     const clock_t begin = clock();
-    vector<vector<int>> knn = KNN(frame1, frame2, 20, 64);
+    int number_of_ref_points = 64;
+    vector<vector<int>> knn = KNN(frame1, frame2, 20, number_of_ref_points);
     float run_time = float(clock() - begin);
     cout<<endl<< "run_time" <<run_time;
+    int num_threads = 4;
+
+    //slicing the data;
+    Frame slices[num_threads];
+    int slice_size = number_of_ref_points / num_threads;
+    for(int i = 0; i< num_threads;i++)
+    {
+        vector<vector<float>> temp  (slice_size , vector<float> (frame_channels, 0));
+        for (int j = 0; j < slice_size; j++)
+        {
+            for (int c = 0; c<frame_channels;c++){
+            temp[j][c] = frame2.data[i*slice_size + j][c];
+        }
+        }
+        slices[i].data = temp;
+        slices[i].num_points = slice_size;
+        slices[i].points_dim = frame_channels;
+    }
+cout<<endl<<endl<<"az inja";
+    int FN = 1;
+    for (int j =0; j<slice_size;j++) for (int c = 0; c<frame_channels;c++)cout<<" "<<slices[FN].data[j][c]<<" ,";
+        cout<<endl<<"az inja2:";
+    for (int j =0; j<slice_size;j++) for (int c = 0; c<frame_channels;c++)cout<<" "<<frame2.data[FN*slice_size+ j][c]<<" ,";
+    //cout<<endl<<slices[2].data;
 
     //cout<<knn.size()<<"\n";
     //cout<<knn[0].size()<<"\n";
