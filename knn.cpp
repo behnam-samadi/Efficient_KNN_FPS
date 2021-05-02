@@ -2,9 +2,80 @@
 #include <iomanip>
 #include <fstream>
 #include <vector>
+#include <algorithm>
+#include<cmath>
 using namespace std;
 
+vector<int> topK(vector<float> input, int K){
+    float inf = 0;
+    for (int i = i ; i< input.size();i++)
+    {
+        if (input[i] > inf) inf = i;
+    }
+    inf = inf + 100;
 
+
+        //cout<<"start of funciton TOPK"<<"\n";
+    //for (int i = 0; i<8;i++){
+        
+      //      cout<<input[i]<<" ";
+        
+   // }
+    //cout<<endl;
+
+    vector<int> result(K);
+    for (int c = 0; c<K; c++){
+        int min_arg = 0;
+        for (int j = 0; j<input.size();j++)
+        {
+            if(input[j] < input[min_arg]){
+                min_arg = j;
+            }
+        }
+        //cout<<"maxarg: " <<min_arg<<"\n";
+        result[c]  = min_arg;
+        input[min_arg] = inf;
+
+
+    }
+    /*
+    cout<<"end of funciton TOPK"<<"\n";
+    for (int i = 0; i<input.size();i++){
+        
+            cout<<input[i]<<" ";
+        
+    }*/
+/*    cout<<"\n"<<"result"<<"\n";
+    for (int i = 0; i<result.size();i++){
+        
+            cout<<result[i]<<" ";
+        
+    }
+    cout<<endl;*/
+    
+
+return (result);
+}
+
+
+float calc_distance (vector<float> v1, vector<float> v2, string type)
+{
+    float sum = 0;
+    for(int i = 0; i<v1.size();i++)
+    {
+        if (type=="Euclidean")
+        sum+= pow(abs(v1[i] - v2[i]), 2);
+        if (type=="Manhattan")
+        sum+= abs(v1[i] - v2[i]);
+        //cout<<"sum become:"<<sum<<"\n";
+    }
+    //cout<<"\n"<<"sum:"<<sum;
+
+    float result = sum;
+    if (type == "Euclidean")
+        result = sqrt(result);
+    return(result);
+}
 
 
 class Frame{
@@ -39,16 +110,29 @@ frame.data = data;
 return(frame);
 }
 
-vector <vector<int>> KNN (Frame frame1, Frame frame2, int K){
-    int num_ref_points = frame1.data.size();
-    int num_query_points = frame2.data.size();
-    vector<vector<int>> result  (num_query_points , vector<float> (K, 0));
+vector<vector<int>> KNN (Frame reference, Frame query, int K, int num_query=0){
+    int num_ref_points = reference.data.size();
+    int num_query_points = query.data.size();
+    //imidiate
+    //num_ref_points = 12;
+    if (!(num_query == 0)) num_query_points = num_query;
+    vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
     vector<float>  distance (num_ref_points);
 
     for(int i = 0; i<num_query_points;i++){
-        distance[i] = 
+        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        for (int j = 0; j<num_ref_points;j++)
+        {
+            distance[j] = calc_distance(query.data[i], reference.data[j], "Manhattan");
+        }
+        vector<int> topk = topK(distance, K);
+        for(int c = 0; c<K;c++)
+        {
+            result[i][c] = topk[c];
+        }
+        
     }
-
+return(result);
 }
 
 
@@ -69,6 +153,21 @@ int main(){
         }
         cout<<"\n";
     }
+    std::vector<float> v1 = {1,2,3};
+    std::vector<float> v2 = {4,6,3};
+    cout<<"\n"<<"distance: "<<calc_distance(v1,v2, "Euclidean");
+    vector<vector<int>> knn = KNN(frame1, frame2, 1, 20);
+    cout<<knn.size()<<"\n";
+    cout<<knn[0].size()<<"\n";
+    cout<<"inja:"<<"\n"<<"\n";
+    cout<<endl;
+    for (int i = 0; i<knn.size();i++){
+        for (int j = 0; j< knn[0].size();j++){
+        cout<< knn[i][j]<<"\n";}
+        cout<<endl;
+
+    }
+    
     
     //cout<<frame1.num_points<<" "<<frame1.points_dim<<"\n";
     //cout<<"\n" << frame2.num_points<<" "<<frame2.points_dim;
