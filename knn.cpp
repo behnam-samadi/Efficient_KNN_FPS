@@ -4,7 +4,11 @@
 #include <vector>
 #include <algorithm>
 #include<cmath>
+#include <pthread.h>
 using namespace std;
+
+
+
 
 vector<int> topK(vector<float> input, int K){
     float inf = 0;
@@ -13,16 +17,6 @@ vector<int> topK(vector<float> input, int K){
         if (input[i] > inf) inf = i;
     }
     inf = inf + 100;
-
-
-        //cout<<"start of funciton TOPK"<<"\n";
-    //for (int i = 0; i<8;i++){
-        
-      //      cout<<input[i]<<" ";
-        
-   // }
-    //cout<<endl;
-
     vector<int> result(K);
     for (int c = 0; c<K; c++){
         int min_arg = 0;
@@ -32,28 +26,9 @@ vector<int> topK(vector<float> input, int K){
                 min_arg = j;
             }
         }
-        //cout<<"maxarg: " <<min_arg<<"\n";
         result[c]  = min_arg;
         input[min_arg] = inf;
-
-
-    }
-    /*
-    cout<<"end of funciton TOPK"<<"\n";
-    for (int i = 0; i<input.size();i++){
-        
-            cout<<input[i]<<" ";
-        
-    }*/
-/*    cout<<"\n"<<"result"<<"\n";
-    for (int i = 0; i<result.size();i++){
-        
-            cout<<result[i]<<" ";
-        
-    }
-    cout<<endl;*/
-    
-
+    }    
 return (result);
 }
 
@@ -67,10 +42,7 @@ float calc_distance (vector<float> v1, vector<float> v2, string type)
         sum+= pow(abs(v1[i] - v2[i]), 2);
         if (type=="Manhattan")
         sum+= abs(v1[i] - v2[i]);
-        //cout<<"sum become:"<<sum<<"\n";
     }
-    //cout<<"\n"<<"sum:"<<sum;
-
     float result = sum;
     if (type == "Euclidean")
         result = sqrt(result);
@@ -85,6 +57,21 @@ class Frame{
     vector<vector<float>> data;
 };
 
+void * call_thread (void* args){
+    arguments = ((arg_to_thread*) args);
+    vector<vector<int>> knn = KNN(arguments.reference, arguments.query, arguments.K, arguments.num_ref);
+    return 
+}
+
+
+struct thread_data
+{
+    Frame query;
+    Frame reference;
+    int K;
+    int num_ref;
+    vector<vector<int>> result;
+};
 
 Frame read_data (string file_adress, int points_dim, int output_dims)
 { 
@@ -102,7 +89,6 @@ Frame read_data (string file_adress, int points_dim, int output_dims)
     for(size_t j = 0; j < frame.points_dim; j++)
     {
         data[i][j] = data_temp[i*points_dim + j];
-        
     }
     
 }
@@ -113,14 +99,11 @@ return(frame);
 vector<vector<int>> KNN (Frame reference, Frame query, int K, int num_query=0){
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    //imidiate
-    //num_ref_points = 12;
     if (!(num_query == 0)) num_query_points = num_query;
     vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
     vector<float>  distance (num_ref_points);
-
     for(int i = 0; i<num_query_points;i++){
-        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
             distance[j] = calc_distance(query.data[i], reference.data[j], "Manhattan");
@@ -130,7 +113,6 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K, int num_query=0){
         {
             result[i][c] = topk[c];
         }
-        
     }
 return(result);
 }
@@ -155,18 +137,22 @@ int main(){
     }
     std::vector<float> v1 = {1,2,3};
     std::vector<float> v2 = {4,6,3};
-    cout<<"\n"<<"distance: "<<calc_distance(v1,v2, "Euclidean");
-    vector<vector<int>> knn = KNN(frame1, frame2, 1, 20);
-    cout<<knn.size()<<"\n";
-    cout<<knn[0].size()<<"\n";
-    cout<<"inja:"<<"\n"<<"\n";
-    cout<<endl;
-    for (int i = 0; i<knn.size();i++){
-        for (int j = 0; j< knn[0].size();j++){
-        cout<< knn[i][j]<<"\n";}
-        cout<<endl;
+    cout<<"\n"<<"distance: "<<calc_distance(v1,v2, "Manhattan");
+    const clock_t begin = clock();
+    vector<vector<int>> knn = KNN(frame1, frame2, 20, 64);
+    float run_time = float(clock() - begin);
+    cout<<endl<< "run_time" <<run_time;
 
-    }
+    //cout<<knn.size()<<"\n";
+    //cout<<knn[0].size()<<"\n";
+    //cout<<"inja:"<<"\n"<<"\n";
+    //cout<<endl;
+    //for (int i = 0; i<knn.size();i++){
+        //for (int j = 0; j< knn[0].size();j++){
+        //cout<< knn[i][j]<<"\n";}
+        //cout<<endl;
+
+    //}
     
     
     //cout<<frame1.num_points<<" "<<frame1.points_dim<<"\n";
