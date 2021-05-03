@@ -94,6 +94,22 @@ frame.data = data;
 return(frame);
 }
 
+
+
+void print_vector_2D_int (vector<vector<int>>input){
+    for (int i = 0; i< input.size();i++)
+    {
+        for(int j = 0; j<input[0].size();j++)
+        {
+            cout<<input[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+return;}
+
+
+
 vector<vector<int>> KNN (Frame reference, Frame query, int K, int num_query=0){
     cout<<"one thread is working";
     int num_ref_points = reference.data.size();
@@ -114,7 +130,11 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K, int num_query=0){
         }
 
     }
-    cout<<"one thread is reurnin";
+    //cout<<"one thread is returning";
+    //cout<<"/////////**********////////------------"<<endl<<endl;
+    //print_vector_2D_int(result);
+    //cout<<"/////////**********////////------------"<<endl<<endl;
+
 return(result);
 }
 
@@ -128,10 +148,10 @@ void * call_thread (void* args){
     int d = arguments.num_ref;
     cout<<"one thread is running";
     vector<vector<int>> knn = KNN(*(arguments.reference), *(arguments.query), arguments.K, arguments.num_ref);
-    cout<<endl<<"one thread is writing result";
-    ((thread_data*)args)->result = knn;
-    cout<<endl<<"-----------------one thred wrote the result";
-    return (0);
+    //cout<<endl<<"one thread is writing result**********************************";
+    //((thread_data*)args)->result = knn;
+    cout<<endl<<"------------\n---\n---*******--one thred wrote the result\n-----\n---***********----";
+    
 
 }
 
@@ -208,7 +228,7 @@ int main(){
         slices[i].num_points = slice_size;
         slices[i].points_dim = frame_channels;
     }
-    print_frame(slices[2], slices[2].data.size());
+    //print_frame(slices[2], slices[2].data.size());
 
 
     pthread_t threads[num_threads];
@@ -220,14 +240,14 @@ int main(){
         data_for_threads[t].query = &(slices[t]);
         //imidiate
         data_for_threads[t].K = number_of_nearest_point;
-        data_for_threads[t].num_ref = number_of_ref_points;
+        data_for_threads[t].num_ref = number_of_ref_points/num_threads;
     }
     cout<<"------"<<endl;
-    print_frame(*(data_for_threads[2].query), 16);
+    //print_frame(*(data_for_threads[2].query), 16);
     cout<<"and---"<<endl;
-    print_vector_2D(slices[2].data, 16);
+    //print_vector_2D(slices[2].data, 16);
     cout<<"----------";
-    exit(0);
+    
     cout<<"creating threads"<<endl;
 
     for(int t = 0 ; t<num_threads;t++)
