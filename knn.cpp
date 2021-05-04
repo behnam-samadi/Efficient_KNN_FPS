@@ -56,25 +56,9 @@ class Frame{
     int points_dim;
     vector<vector<float>> data;
 };
-
-struct thread_data
-{
-    Frame *query;
-    Frame *reference;
-    int K;
-    int start_query;
-    int end_query;
-    vector<vector<int>> result;
-};
-
-
-
-
-
-
 Frame read_data (string file_adress, int points_dim, int output_dims)
 { 
-	ifstream fin(file_adress, ios::binary);
+    ifstream fin(file_adress, ios::binary);
     fin.seekg(0, ios::end);
     const size_t num_elements = fin.tellg() / sizeof(float);
     fin.seekg(0, ios::beg);
@@ -95,6 +79,15 @@ frame.data = data;
 return(frame);
 }
 
+struct thread_data
+{
+    vector<float> query_point;
+    Frame *reference;
+    int start_reference;
+    int end_reference;
+    vector<float> result;
+};
+
 
 
 void print_vector_2D_int (vector<vector<int>>input){
@@ -111,48 +104,18 @@ void print_vector_2D_int (vector<vector<int>>input){
 return;}
 
 
-
-vector<vector<int>> KNN (Frame * reference, Frame * query, int K, int query_start, int query_end){
-    cout<<"one thread is working";
-    int num_ref_points = reference->data.size();
-    //int num_query_points = query->data.size();
-    int num_query_points = query_end - query_start;
-    cout<<"num_query_points"<<num_query_points<<endl;
-    vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
-    vector<float>  distance (num_ref_points);
-    for(int i = query_start; i<query_end;i++){
-        //cout<<" i is " << i << "from" << query_start <<" "<< query_end<<endl;
-        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
-        for (int j = 0; j<num_ref_points;j++)
-        {
-            distance[j] = calc_distance(query->data[i], reference->data[j], "Manhattan");
-        }
-        vector<int> topk = topK(distance, K);
-        //cout<<"top was selected"<<endl;
-        for(int c = 0; c<K;c++)
-        {
-            result[i-query_start][c] = topk[c];
-        }
-
+void * call_thread (void* args)
+{
+    thread_data * args_c = (thread_data*)args;
+    for (int i = args_c->start_reference; i<args_c->end_reference;i++ )
+    {
+        
+         float res = calc_distance(args_c->query_point, args_c->reference->data[i],"Manhattan");
+         (args_c->result)[i] = res;
     }
-    cout<<"one thread is returning";
-    cout<<"/////////**********////////------------"<<endl<<endl;
-    print_vector_2D_int(result);
-    cout<<"/////////**********////////------------"<<endl<<endl;
-
-return(result);
 }
 
-void * call_thread (void* args){
-    thread_data arguments = *(thread_data*) args;
 
-    //cout<<"one thread is running";
-    //cout<<endl<<"one thread is writing result**********************************";
-    ((thread_data*)args)->result = KNN(arguments.reference, arguments.query, arguments.K, arguments.start_query, arguments.end_query);
-    //cout<<endl<<"------------\n---\n---*******--one thred wrote the result\n-----\n---***********----";
-    
-
-}
 
 void print_frame (Frame frame, int num_points){
     cout<<"it has size:" << frame.data.size()<<" "<<frame.data[0].size()<<endl;
@@ -168,8 +131,8 @@ void print_frame (Frame frame, int num_points){
 }
 
 
-void print_vector_2D (vector<vector<float>>input, int num_points){
-    for (int i = 0; i< num_points;i++)
+void print_vector_2D (vector<vector<float>>input){
+    for (int i = 0; i< input.size();i++)
     {
         for(int j = 0; j<input[0].size();j++)
         {
@@ -180,16 +143,66 @@ void print_vector_2D (vector<vector<float>>input, int num_points){
 
 }
 
+vector<float> calc_distance_multi_thread (vector<float> query_point, frame *reference)
+{
+    int num_threads = 4;
+    pthread_t threads[num_threads];
+    thread_data data_for_threads[num_threads];
+    int slice_size = floor(reference->data.size()/num_threads) ;
+    vector<vector<int>> result;
+    for (int t = 0 ; t<num_threads;t++)
+    {
+    data_for_threads[t].query_point = query_point;
+    data_for_threads.reference = reference;
+    data_for_threads[t].start_reference = t * slice_size;
+    data_for_threads[t].end_reference = (t+1) * slice_size;
+    data_for_threads[t].result = &result;
+    }
+    data_for_threads[num_threads].end_reference = reference->data.size();
+
+    for(int t = 0 ; t<num_threads;t++)
+    {
+        pthread_create(&(threads[t]), NULL, call_thread, (void*)(&(data_for_threads[t])));
+    }
+    
+
+
+    cout<<"joining threads"<<endl;
+
+    for(int t = 0; t<num_threads;t++)
+    {
+        pthread_join(threads[t], NULL);
+    }
+    cout<<"threads joined";
+
+    return(data_for_threads[0].result);
+
+
+}
 
 int main(){
     int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     const clock_t begin_time = clock();
+    int num_ref_points = reference.data.size();
+    int num_query_points = 256;
+    cout<< num_ref_points<<" " << num_query_points<<endl;
+
+    for(int i = 0; i<num_query_points;i++)
+    {
+        print_vector_2D(calc_distance_multi_thread(query.data[i],&reference.data));
+    }
+
+
+    exit(0);
+
+
+    //for(int i = 0 ; i<)
 
     int number_of_ref_points = 256;
     int number_of_nearest_point = 20;
-    int num_threads = 2;
+    int num_threads = 4;
 
 
     int slice_size = number_of_ref_points / num_threads;
@@ -203,6 +216,7 @@ int main(){
         data_for_threads[t].K = number_of_nearest_point;
         data_for_threads[t].start_query = (t*slice_size);
         data_for_threads[t].end_query = (t+1) * slice_size;
+        data_for_threads[t].order = t%2;
         
     }
 
