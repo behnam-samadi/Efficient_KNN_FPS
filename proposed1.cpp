@@ -5,6 +5,7 @@
 #include <algorithm>
 #include<cmath>
 #include <pthread.h>
+#include "numeric"
 using namespace std;
 
 class Frame{
@@ -13,6 +14,17 @@ class Frame{
     int points_dim;
     vector<vector<float>> data;
 };
+
+struct thread_data
+{
+    vector<int>* sorted_indices;
+    vecotr<float>* sum_cordinates;
+    int begin_index;
+    int end_index;
+    vector<vector<float>> points;
+};
+
+
 
 float calc_distance (vector<float> v1, vector<float> v2, string type)
 {
@@ -121,7 +133,7 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int
 return(result);
 }
 
-void print_vector (vector<float> v){
+void print_vector (vector<int> v){
     for (int i = 0 ; i< v.size();i++)
     {
         cout<<endl<<v[i]<<" ";
@@ -141,6 +153,17 @@ void print_vector_2D (vector<vector<int>>input){
 
 }
 
+void * thread_function(void *)
+{
+
+}
+
+struct query_point
+{
+    vector<float> point;
+    
+}
+
 int main()
 {
 	int frame_channels = 3;
@@ -149,6 +172,7 @@ int main()
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     num_query_points = 512;
+    int round_size = 64;
     cout<< num_ref_points<<" " << num_query_points<<endl;
     vector<float> sum_cordinates(num_ref_points);
     for (int i =0 ; i<num_ref_points;i++)
@@ -161,7 +185,20 @@ int main()
         //cout<<"sum_cordinates "<< sum_cordinates[i]<<" ,"<<"reference "<< reference.data[i][j]<<endl;
         }
     }
-    print_vector(sum_cordinates);
+
+    vector<int> sorted_indices(num_ref_points);
+    iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
+    sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
+    sort( sum_cordinates.begin(),sum_cordinates.end());
+
+
+    //print_vector(sum_cordinates);
+    print_vector(sorted_indices);
+    int num_round = num_query_points / round_size;
+    for (int round = 0 ; round < num_round;round++)
+    {
+        
+    }
 
     exit(0);
     int k = 40;
