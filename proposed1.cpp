@@ -6,6 +6,7 @@
 #include<cmath>
 #include <pthread.h>
 #include "numeric"
+#include <limits>
 using namespace std;
 
 class Frame{
@@ -15,14 +16,6 @@ class Frame{
     vector<vector<float>> data;
 };
 
-struct thread_data
-{
-    vector<int>* sorted_indices;
-    vecotr<float>* sum_cordinates;
-    int begin_index;
-    int end_index;
-    vector<vector<float>> points;
-};
 
 
 
@@ -152,20 +145,108 @@ void print_vector_2D (vector<vector<int>>input){
     }
 
 }
-
-void * thread_function(void *)
+struct thread_data
 {
+    vector<int>* sorted_indices;
+    vector<float>* sum_cordinates;
+    int begin_index;
+    int end_index;
+    vector<vector<float>> points;
+};
 
+int binary_search (vector<float>* reference, float query, int begin, int end)
+{
+    int length = end - begin+1;
+    int end_orig = end;
+    int middle_index = (begin + end) / 2;
+    float middle = (*reference)[(int)((begin + end) / 2)];
+    //cout<<middle_index<<endl;
+    //cout<<middle<<endl;
+    //exit(0);
+    while (end >= begin)
+    {
+        middle_index = (begin + end) / 2;
+        middle = (*reference)[(int)((begin + end) / 2)];
+        //cout<<"begin and end"<<begin<<" "<<end<<endl;
+        if (query == middle) 
+        {
+            //cout<<"inja";
+            return (middle_index);
+        }
+        else if (query > middle) 
+        {
+            //cout<<"begin and end in loop"<<begin<<" "<<end<<endl;
+            //cout<<"inja1 ";
+            //cout<<middle_index<<" ";
+            //cout<<begin<<endl;
+            begin = middle_index+1;
+        }
+        else if(query < middle) 
+            {
+                //cout<<"inja2";
+                end = middle_index-1;
+            }
+        }
+        //cout<<"unsuccesfull"<<endl;
+        float diff1 = abs(query - middle);
+        float diff2;
+        float diff3;
+        if (middle_index < end_orig)
+        {
+            diff2 = abs(query - (*reference)[(middle_index+1)]);
+        }
+        else {
+            diff2 =numeric_limits<float>::max() ;
+        }
+        if (middle_index > 0)
+        {
+            diff3 = abs(query - (*reference)[middle_index-1]);
+        }
+        else
+        {
+            diff3 = numeric_limits<float>::max();
+        }
+        cout<<diff1<<" "<<diff2<<" "<<diff3<<endl;
+        if ((diff1 <= diff2) && (diff1 <= diff3))  {
+        cout<<"first"<<endl;
+        return(middle_index);
+        }
+        else if ((diff2 <= diff1) && (diff2 <= diff3))
+        {
+            cout<<"second"<<endl;
+            return(middle_index+1);
+        }
+        else if((diff3 <= diff2) && (diff3 <= diff1)) 
+        {
+        cout<<"third"<<endl;
+        return(middle_index-1);
+        }
+
+    
+}
+
+void * thread_function(void *input)
+{
+    thread_data data = *((thread_data *)input);
+    if (data.points.size() == 1)
+    {
+
+    }
 }
 
 struct query_point
 {
     vector<float> point;
-    
-}
+    int index;
+};
 
 int main()
 {
+    vector<float> v {11,22,35,41,41,60,72};
+    int adad;
+    cin>>adad;
+    cout<<binary_search(&v, adad, 0, 6);
+    exit(0);
 	int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
