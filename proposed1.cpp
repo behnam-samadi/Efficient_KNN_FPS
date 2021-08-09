@@ -16,7 +16,28 @@ class Frame{
     vector<vector<float>> data;
 };
 
-
+class parallel_search_result{
+    vector <int>  values;
+    vector <bool> intis;
+    public:
+    parallel_search_result(int size)
+    {
+        values = vector<int> (size);
+        intis = vector<bool> (size);
+        for (int i = 0 ;i<size;i++)
+        {
+            intis[i] = 0;
+        }
+    }
+    void set_value(int value, int start_index, int end_index)
+    {
+        for (int i = start_index; i<end_index; i++)
+        {
+            this->values[i] = value;
+            this->intis[i] = 1;
+        }
+    }
+};
 
 
 float calc_distance (vector<float> v1, vector<float> v2, string type)
@@ -134,6 +155,15 @@ void print_vector (vector<int> v){
     cout<<endl;
 }
 
+
+void print_vector_bool (vector<bool> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
 void print_vector_2D (vector<vector<int>>input){
     for (int i = 0; i< input.size();i++)
     {
@@ -240,13 +270,89 @@ struct query_point
     int index;
 };
 
+
+struct spliting_result
+{
+    int divider1;
+    int divider2;
+};
+
+spliting_result binary_search_split(vector<int> *input, int start_index, int end_index, int query)
+{
+    int start_orig = start_index;
+    int end_orig = end_index;
+    bool successful = 0;
+    int middle_index;
+    while (end_index >= start_index)
+    {
+        middle_index = (end_index + start_index) / 2;
+        if (query > (*input)[middle_index])
+        {
+            start_index = middle_index + 1;
+        }
+        else if (query < (*input)[middle_index])
+        {
+            end_index = middle_index - 1;
+        }
+        else if(query == (*input)[middle_index])
+        {
+            successful = 1;
+            break;
+        }       
+    }
+    spliting_result result;
+    if (!successful)
+    {
+        int divide_point = start_index;
+        if (end_index == -1) divide_point = 0;
+        result.divider1 = divide_point;
+        result.divider2 = divide_point;
+        
+    }
+    else
+    {
+        int divide_point1 = middle_index;
+        int divide_point2 = middle_index;
+        while(divide_point1 > 0) 
+        {
+         if ((*input)[divide_point1-1]==query) divide_point1--;
+         else break;
+        }
+        while(divide_point2 < end_index)
+        {
+            if ((*input)[divide_point2+1]==query) divide_point2++;
+            else break;
+        }
+        divide_point2++;
+        result.divider1 = divide_point1;
+        result.divider2 = divide_point2;
+    }
+    return result;
+
+}
+void parallel_binary_search(vector<int> *reference, vector<int>* query,int start_index, int end_index, parallel_search_result* result)
+{
+    //reference and query are sorted vectors
+
+}
+
+
 int main()
 {
-    vector<float> v {11,22,35,41,41,60,72};
-    int adad;
-    cin>>adad;
-    cout<<binary_search(&v, adad, 0, 6);
-    exit(0);
+    vector<int> test = {1,3,4,4,4,5,6,8,8,8,9,10,10,12};
+    cout<<"please enter query";
+    int query_number;
+    cin>> query_number;
+
+    spliting_result result = binary_search_split(&test, 0, 13, query_number);
+    cout<<endl<<result.divider1<<" "<<result.divider2;
+
+    return(0);
+
+    //parallel_search_result result(9);
+    //print_vector(result.values);
+    //print_vector_bool(result.intis);
+    return(0);
 	int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
@@ -254,6 +360,7 @@ int main()
     int num_query_points = query.data.size();
     num_query_points = 512;
     int round_size = 64;
+
     cout<< num_ref_points<<" " << num_query_points<<endl;
     vector<float> sum_cordinates(num_ref_points);
     for (int i =0 ; i<num_ref_points;i++)
@@ -275,6 +382,8 @@ int main()
 
     //print_vector(sum_cordinates);
     print_vector(sorted_indices);
+    cout<<endl<<sorted_indices.size();
+    return(0);
     int num_round = num_query_points / round_size;
     for (int round = 0 ; round < num_round;round++)
     {

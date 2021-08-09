@@ -106,7 +106,7 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int
     vector<float>  distance (num_ref_points);
 
     for(int i = 0; i<num_query_points;i++){
-        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        if (i % 30 == 0) cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
             distance[j] = calc_distance(query.data[i], reference.data[j], metric);
@@ -141,13 +141,31 @@ int main()
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
+    cout<< num_ref_points;
+    cout<<endl<<num_query_points;
     num_query_points = 512;
     cout<< num_ref_points<<" " << num_query_points<<endl;
     int k = 40;
     vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
     cout<<knn_result.size()<<endl;
     cout<<knn_result[0].size();
-    print_vector_2D(knn_result);
+    int rows;
+    int columns;
+    
+
+bool cont = 1;
+while (cont)
+{
+    cout << "enter number of rows to display";
+    cin>>rows;
+    cout<< "enter columns to display";
+    cin>> columns;
+    cout<<knn_result[rows][columns]<<endl;
+    cout<<"Do you want to continue?";
+    cin>>cont;
+}
+    return(0);
+    //print_vector_2D(knn_result);
     vector<vector<int>>  ground_truth = KNN(reference, query, k, "Euclidean",num_query_points);
     int mathces = 0;
     for (int i = 0; i<num_query_points;i++)
@@ -166,7 +184,7 @@ int main()
     		if (found == true) mathces++;
     	}
     }
-    cout<<(float)mathces/((float)num_query_points*(float)k);
+    cout<<"accuracy of metric:"<<(float)mathces/((float)num_query_points*(float)k);
 
     //vector<float> test2{10, 20 , 30};
     //vector<float> test1{110, 120 , 130};
