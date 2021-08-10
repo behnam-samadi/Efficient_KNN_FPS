@@ -379,12 +379,21 @@ void* parallel_binary_search(void * data_void)
     parallel_search_result* result = data->result;
     vector<pthread_t>* threads = data->threads;
 
+    int middle_index = (start_index + end_reference)/2
+
     spliting_state state = one_step_parallel_binary_search(reference , query , start_reference, end_reference , start_query, end_query, result);
     while(state.left_size > 1)
     {
         if(state.right_size > 0)
         {
-
+            pthread_t temp;
+            (*threads).push_back(temp);
+            thread_data* args;
+            args->reference = reference;
+            args->query = query;
+            args->start_reference = middle_index + 1;
+            
+            pthread_create( &(threads[threads.size()-1]), NULL, parallel_binary_search, (void*)&args);
         }
     }
 
