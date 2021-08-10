@@ -277,6 +277,16 @@ struct spliting_result
     int divider2;
 };
 
+
+struct spliting_state
+{
+    int left_size;
+    int right_size;
+    int middle_size;
+    int divider1;
+    int divider2;
+};
+
 spliting_result binary_search_split(vector<int> *input, int start_index, int end_index, int query)
 {
     int start_orig = start_index;
@@ -330,9 +340,44 @@ spliting_result binary_search_split(vector<int> *input, int start_index, int end
     return result;
 
 }
-void parallel_binary_search(vector<int> *reference, vector<int>* query,int start_index, int end_index, parallel_search_result* result)
+
+
+
+spliting_state one_step_parallel_binary_search(vector<int> *reference, vector<int>* query,int start_reference, int end_reference, start_query, end_query, parallel_search_result* result, vector<pthread_t>* threads)
+{
+    int middle_index = (start_index + end_reference)/2
+    int middle_value = (*reference)[middle_index]
+    spliting_result split = binary_search_split(&query, start_query, end_query, middle_value)
+    int divider1 = split.divider1;
+    int divider2 = split.divider2;
+    // assigning result to the found points
+    result->set_value((*reference)[divider1], divider1, divider2);
+    spliting_state state;
+    state.left_size = abs(divider1 - start_query);
+    state.middle_size = divider2 - divider1;
+    state.right_size = abs(divider2 - end_query);
+    state.divider1 = divider1;
+    state.divider2 = divider2;
+    return state;
+}
+
+
+void parallel_binary_search(vector<int> *reference, vector<int>* query,int start_reference, int end_reference, start_query, end_query, parallel_search_result* result, vector<pthread_t>* threads)
 {
     //reference and query are sorted vectors
+    int middle_index = (start_index + end_reference)/2
+    int middle_value = (*reference)[middle_index]
+    spliting_result split = binary_search_split(&query, start_query, end_query, middle_value)
+    int divider1 = split.divider1;
+    int divider2 = split.divider2;
+    // assigning result to the found points
+    result->set_value((*reference)[divider1], divider1, divider2);
+
+
+
+    
+
+
 
 }
 
