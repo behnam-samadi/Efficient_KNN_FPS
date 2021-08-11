@@ -378,6 +378,15 @@ void* parallel_binary_search(void * data_void)
     int end_query = data->end_query;
     parallel_search_result* result = data->result;
     vector<pthread_t*>* threads = data->threads;
+    if ((end_reference - start_reference) < 5)
+    {
+        for (int q = 0 ; q<= end_query;q++)
+        {
+            int binary_search (vector<float>* reference, float query, int begin, int end)
+            int single_result = binary_search(reference, (*query)[q], start_reference, end_reference);
+            result->set_value(single_result, q, q+1);
+        }
+    }
 
     int middle_index = (start_index + end_reference)/2
     do{
