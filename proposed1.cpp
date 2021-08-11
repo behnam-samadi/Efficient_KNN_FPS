@@ -177,14 +177,14 @@ void print_vector_2D (vector<vector<int>>input){
 }
 struct thread_data
 {
- vector<int> *reference;
- vector<int>* query;
+ vector<float> *reference;
+ vector<float>* query;
  int start_reference;
  int end_reference;
  int start_query;
  int end_query;
  parallel_search_result* result;
- vector<pthread_t>* threads;
+ vector<pthread_t*>* threads;
 };
 
 
@@ -292,7 +292,7 @@ struct spliting_state
     int divider2;
 };
 
-spliting_result binary_search_split(vector<int> *input, int start_index, int end_index, int query)
+spliting_result binary_search_split(vector<float> *input, int start_index, int end_index, float query)
 {
     int start_orig = start_index;
     int end_orig = end_index;
@@ -348,7 +348,7 @@ spliting_result binary_search_split(vector<int> *input, int start_index, int end
 
 
 
-spliting_state one_step_parallel_binary_search(vector<int> *reference, vector<int>* query,int start_reference, int end_reference, start_query, end_query, parallel_search_result* result)
+spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
 {
     int middle_index = (start_index + end_reference)/2
     int middle_value = (*reference)[middle_index]
@@ -370,38 +370,40 @@ spliting_state one_step_parallel_binary_search(vector<int> *reference, vector<in
 void* parallel_binary_search(void * data_void)
 {
     thread_data* data = (*thread_data)(data_void);
-    vector<int> * reference = data->reference;
-    vector<int> * query = data->query;
+    vector<float> * reference = data->reference;
+    vector<float> * query = data->query;
     int start_reference = data->start_reference;
     int end_reference = data->end_reference;
     int start_query = data->start_query;
     int end_query = data->end_query;
     parallel_search_result* result = data->result;
-    vector<pthread_t>* threads = data->threads;
+    vector<pthread_t*>* threads = data->threads;
 
     int middle_index = (start_index + end_reference)/2
-
+    do{
     spliting_state state = one_step_parallel_binary_search(reference , query , start_reference, end_reference , start_query, end_query, result);
     while(state.left_size > 1)
-    {
         if(state.right_size > 0)
         {
-            pthread_t temp;
-            (*threads).push_back(temp);
+            pthread_t* temp = new pthread_t;           
+            threads->push_back(temp);
             thread_data* args;
             args->reference = reference;
             args->query = query;
             args->start_reference = middle_index + 1;
-            
-            pthread_create( &(threads[threads.size()-1]), NULL, parallel_binary_search, (void*)&args);
+            args->end_reference = end_reference;
+            arg->start_query = state.divider2;
+            args->end_query = end_query;
+            args-result = result;
+            args->threads = threads;
+            pthread_create(temp, NULL, parallel_binary_search, (void*)&args);
         }
-    }
-
-
-    
-
-
-
+    } while(state.left_size>1);
+    if (state.left_size == 1)
+        {
+            int signle_result = binary_search(reference, (*query)[start_query], start_query, middle_index -1);
+            result->set_value(*(reference)[signle_result], start_query, start_query+1);
+        }
 }
 
 

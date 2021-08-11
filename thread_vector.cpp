@@ -17,10 +17,14 @@ struct arg_to_thread{
 
 int main()
 {
-     vector<pthread_t> threads;
-     pthread_t thread;
-     threads.push_back(thread);
-     threads.push_back(thread);
+     vector<pthread_t*> threads;
+     for (int i = 0 ; i < 2;i++)
+     {
+          threads.push_back(new pthread_t);
+     }
+     //pthread_t thread;
+     //threads.push_back(thread);
+     //threads.push_back(thread);
      arg_to_thread arg1;
      arg_to_thread arg2;
      arg1.size = 100000;
@@ -37,16 +41,20 @@ int main()
 
     /* Create independent threads each of which will execute function */
 
-     iret1 = pthread_create( &(threads[0]), NULL, print_message_function, (void*)&arg1);
+     iret1 = pthread_create( (threads[0]), NULL, print_message_function, (void*)&arg1);
      cout<<"p";
-     iret2 = pthread_create( &(threads[1]), NULL, print_message_function, (void*)&arg2);
+     iret2 = pthread_create( (threads[1]), NULL, print_message_function, (void*)&arg2);
 
      /* Wait till threads are complete before main continues. Unless we  */
      /* wait we run the risk of executing an exit which will terminate   */
      /* the process and all threads before the threads have completed.   */
 
-     pthread_join( threads[0], NULL);
-     pthread_join( threads[1], NULL); 
+     pthread_join( *(threads[0]), NULL);
+     pthread_join( *(threads[1]), NULL); 
+     for(int i = 0; i<1; i++)
+     {
+          delete threads[i];
+     }
 
      printf("Thread 1 returns: %d\n",iret1);
      printf("Thread 2 returns: %d\n",iret2);
