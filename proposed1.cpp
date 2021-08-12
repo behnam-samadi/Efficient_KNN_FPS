@@ -38,7 +38,7 @@ class parallel_search_result{
             this->values[i] = value;
             this->inits[i] = 1;
             cout<<endl<<i<<"'th element is changed to:" << value<<endl;
-            //fout<<endl<<i<<"'th element is changed to:" << value<<endl;
+            fout<<endl<<i<<"'th element is changed to:" << value<<endl;
             //fout<<endl<<i<<"'th element is changed to:" << value<<endl;
         }
     }
@@ -406,7 +406,12 @@ void* parallel_binary_search(void * data_void)
     parallel_search_result* result = data->result;
     vector<pthread_t*>* threads = data->threads;
     //cout<<endl<<"one call to main function with values"<<start_reference<<" "<< end_reference<<" "<< start_query<<" "<<end_query<<endl;
-    
+    if (end_query < start_query)
+    {
+        //fout<<endl<<"deleted because end is smaller than start"<<endl;
+        delete data;
+        return NULL;
+    }
     if ((end_reference - start_reference) < 5)
     {
         cout<<"running parallel_binary_search with reference size smaller than 5"<<endl;
@@ -414,6 +419,7 @@ void* parallel_binary_search(void * data_void)
         for (int q = start_query ; q<= end_query;q++)
         {
             int binary_search (vector<float>* reference, float query, int begin, int end);
+            //fout<<"single binary search is called for: " <<(*query)[q]<<" " <<start_reference<<" "<< end_reference;
             int single_result = binary_search(reference, (*query)[q], start_reference, end_reference);
             //fout<<endl<<"smaller than 5 assigning: " <<single_result<<" "<<q<<endl;
             cout<<endl<<"smaller than 5 assigning: " <<single_result<<" "<<q<<endl;
@@ -443,9 +449,16 @@ void* parallel_binary_search(void * data_void)
             args->end_query = end_query;
             args->result = result;
             args->threads = threads;
+            if (args->end_query >= args->start_query)
+            {
             cout<<"starting creating thread with valus"<<args->start_reference<<" "<<args->end_reference<<" "<<args->start_query<<" "<<args->end_query<<endl;
-            fout<<"creatign thread: reference: from "<<args->start_reference<<"..........."<<args->end_reference<<"and query from "<<args->start_query<<"............."<<args->end_query<<endl;
+            //fout<<"creatign thread: reference: from "<<args->start_reference<<"..........."<<args->end_reference<<"and query from "<<args->start_query<<"............."<<args->end_query<<endl;
             pthread_create(temp, NULL, parallel_binary_search, (void*)args);
+            }
+            else
+            {
+                delete args;
+            }
         }
         end_query = state.divider1 - 1;
         end_reference = middle_index;
@@ -468,6 +481,11 @@ int main()
     int round_size = 64;
 
     cout<< "num_ref_points: "<< num_ref_points<<"num_query_points: " << num_query_points<<endl;
+
+    
+
+
+    
     vector<float> sum_cordinates(num_ref_points);
     vector<float> sum_cordinates_query(round_size);
     for (int i =0 ; i<num_ref_points;i++)
@@ -498,7 +516,24 @@ int main()
     sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
-
+    cout<<"ine:"<<sorted_query[0];
+    cout<<"va in"<<sorted_indices[59];
+    exit(0);
+    
+    //binary_search (sorted_indices, float query, int begin, int end)
+    
+    int k = 2;
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    cout<<knn_result.size()<<endl;
+    cout<<knn_result[0].size();
+    //print_vector_2D(knn_result);
+    cout<<"result"<<endl;
+    print_vector(knn_result[54]);
+    print_vector(knn_result[13]);
+    print_vector(knn_result[14]);
+    print_vector(knn_result[15]);
+    print_vector(knn_result[16]);
+    exit(0);
     //print_vector(sum_cordinates);
     //print_vector_float(sum_cordinates);
     //cout<<"and:"<<endl;
@@ -561,8 +596,8 @@ int main()
     }
 
     exit(0);
-    int k = 40;
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    //int k = 1;
+    //vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
     cout<<knn_result.size()<<endl;
     cout<<knn_result[0].size();
     print_vector_2D(knn_result);
