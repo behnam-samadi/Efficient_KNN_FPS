@@ -472,7 +472,7 @@ void* parallel_binary_search(void * data_void)
 }
 int main()
 {
-	int frame_channels = 3;
+    int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
@@ -483,58 +483,7 @@ int main()
     cout<< "num_ref_points: "<< num_ref_points<<"num_query_points: " << num_query_points<<endl;
 
     
-    int k = 5;
-    int test_size = 50;
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
-    for (int i = 0 ; i<test_size; i++)
-    {
-        for (int j = 0 ; j<test_size;j++)
-        {
-            cout<<knn_result[i][j]<<" ";
-        }
-        cout<<endl;
-    }
 
-
-    vector<float> sum_cordinates(num_ref_points);
-    for (int i =0 ; i<num_ref_points;i++)
-    {
-        sum_cordinates[i] = 0;
-        for (int j = 0; j<reference.data[0].size();j++)
-        {
-        sum_cordinates[i] += reference.data[i][j];
-        }
-    }
-
-vector<float> sum_cordinates_query(round_size);
-
-    for (int i =0 ; i<round_size;i++)
-    {
-        sum_cordinates_query[i] = 0;
-        for (int j = 0; j<query.data[0].size();j++)
-        {
-        sum_cordinates_query[i] += query.data[i][j];
-        }
-    }
-
-vector<int> sorted_indices(num_ref_points);
-    iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
-    sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
-    sort( sum_cordinates.begin(),sum_cordinates.end());
-
-    for (int q = 0 ; q<test_size;q++)
-    {
-        int result = sorted_indices[binary_search (&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points)];
-        cout<<endl<<result;
-    }
-    cout<<endl;
-    
-
-    exit(0);
-
-/*
-    cout<<knn_result.size()<<endl;
-    cout<<knn_result[0].size();
 
     
     vector<float> sum_cordinates(num_ref_points);
@@ -566,14 +515,39 @@ vector<int> sorted_indices(num_ref_points);
     iota(sorted_query.begin(),sorted_query.end(),0); //Initializing
     sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
-
-    cout<<"ine:"<<sorted_query[0];
-    cout<<"va in"<<sorted_indices[59];
+    
+    int result = sorted_indices[binary_search (&sum_cordinates, sum_cordinates_query[54], 0, num_ref_points)];
+    cout<<endl<<"sorted_query[0] "<< sorted_query[0]<<" "<<result;
     exit(0);
+
+
+thread_data* args = new thread_data;
+    parallel_search_result round_result (round_size);
+    vector<pthread_t*> round_threads;
+    cout<<"round_threads"<<&round_threads<<endl;
+    args->reference = &sum_cordinates;
+    args->query = &sum_cordinates_query;
+    args->start_reference = 0;
+    args->end_reference = reference.data.size();
+    args->start_query = 0;
+    args->end_query = round_size;
+    args->result = &round_result;
+    args->threads = &round_threads;
+    cout<<endl<<endl<<endl<<"start running parallel code"<<endl;
+    //args.threads->push_back(new pthread_t);
+    parallel_binary_search((void*)(args));
+
+    while(!(round_result.all_set()));
+        //{cout<<endl<<"waiting";}
+    for(int t = 0; t<round_threads.size();t++)
+    {
+        pthread_join(*(round_threads[t]),NULL);
+    }
     
+    return(0);
     //binary_search (sorted_indices, float query, int begin, int end)
+    int k = 1;
     
-    int k = 2;
     vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
     cout<<knn_result.size()<<endl;
     cout<<knn_result[0].size();
@@ -584,7 +558,7 @@ vector<int> sorted_indices(num_ref_points);
     print_vector(knn_result[14]);
     print_vector(knn_result[15]);
     print_vector(knn_result[16]);
-    exit(0);
+    
     //print_vector(sum_cordinates);
     //print_vector_float(sum_cordinates);
     //cout<<"and:"<<endl;
@@ -594,7 +568,7 @@ vector<int> sorted_indices(num_ref_points);
     {
         cout<<query.data[i][0]<<", "<<query.data[i][1]<<" ,"<<query.data[i][2]<<endl;
     }*/
-
+/*
     thread_data* args = new thread_data;
     parallel_search_result round_result (round_size);
     vector<pthread_t*> round_threads;
@@ -618,7 +592,7 @@ vector<int> sorted_indices(num_ref_points);
         pthread_join(*(round_threads[t]),NULL);
     }
 
-
+*/
 /*
     thread_data* data = (thread_data*)(data_void);
     vector<float> * reference = data->reference;
@@ -647,7 +621,7 @@ vector<int> sorted_indices(num_ref_points);
     }
 
     exit(0);
-    //int k = 1;
+    
     //vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
     cout<<knn_result.size()<<endl;
     cout<<knn_result[0].size();
@@ -656,25 +630,24 @@ vector<int> sorted_indices(num_ref_points);
     int mathces = 0;
     for (int i = 0; i<num_query_points;i++)
     {
-    	for (int j = 0 ; j < k ; j++)
-    	{
-    		bool found = false;
-    		for (int c= 0; c<k;c++)
-    		{
-    			if(knn_result[i][j]==ground_truth[i][c])
-    			{
-	    			found = true;
-	    			break;
-    			}
-    		}
-    		if (found == true) mathces++;
-    	}
+        for (int j = 0 ; j < k ; j++)
+        {
+            bool found = false;
+            for (int c= 0; c<k;c++)
+            {
+                if(knn_result[i][j]==ground_truth[i][c])
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (found == true) mathces++;
+        }
     }
     cout<<(float)mathces/((float)num_query_points*(float)k);
 
     //vector<float> test2{10, 20 , 30};
     //vector<float> test1{110, 120 , 130};
     //cout<<calc_distance(test1, test2, "Modified_Manhattan");
-    //for (int i = 0 ; i<num_ref_points;i++)cout<<reference.data[i][0]<<","<<reference.data[i][1]<<","<<reference.data[i][2]<<endl;
-
+    //for 
 }
