@@ -483,7 +483,58 @@ int main()
     cout<< "num_ref_points: "<< num_ref_points<<"num_query_points: " << num_query_points<<endl;
 
     
+    int k = 5;
+    int test_size = 50;
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    for (int i = 0 ; i<test_size; i++)
+    {
+        for (int j = 0 ; j<test_size;j++)
+        {
+            cout<<knn_result[i][j]<<" ";
+        }
+        cout<<endl;
+    }
 
+
+    vector<float> sum_cordinates(num_ref_points);
+    for (int i =0 ; i<num_ref_points;i++)
+    {
+        sum_cordinates[i] = 0;
+        for (int j = 0; j<reference.data[0].size();j++)
+        {
+        sum_cordinates[i] += reference.data[i][j];
+        }
+    }
+
+vector<float> sum_cordinates_query(round_size);
+
+    for (int i =0 ; i<round_size;i++)
+    {
+        sum_cordinates_query[i] = 0;
+        for (int j = 0; j<query.data[0].size();j++)
+        {
+        sum_cordinates_query[i] += query.data[i][j];
+        }
+    }
+
+vector<int> sorted_indices(num_ref_points);
+    iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
+    sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
+    sort( sum_cordinates.begin(),sum_cordinates.end());
+
+    for (int q = 0 ; q<test_size;q++)
+    {
+        int result = sorted_indices[binary_search (&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points)];
+        cout<<endl<<result;
+    }
+    cout<<endl;
+    
+
+    exit(0);
+
+/*
+    cout<<knn_result.size()<<endl;
+    cout<<knn_result[0].size();
 
     
     vector<float> sum_cordinates(num_ref_points);
@@ -625,4 +676,5 @@ int main()
     //vector<float> test1{110, 120 , 130};
     //cout<<calc_distance(test1, test2, "Modified_Manhattan");
     //for (int i = 0 ; i<num_ref_points;i++)cout<<reference.data[i][0]<<","<<reference.data[i][1]<<","<<reference.data[i][2]<<endl;
+
 }
