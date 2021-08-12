@@ -18,15 +18,15 @@ class Frame{
 
 class parallel_search_result{
     vector <int>  values;
-    vector <bool> intis;
+    vector <bool> inits;
     public:
     parallel_search_result(int size)
     {
         values = vector<int> (size);
-        intis = vector<bool> (size);
+        inits = vector<bool> (size);
         for (int i = 0 ;i<size;i++)
         {
-            intis[i] = 0;
+            inits[i] = 0;
         }
     }
     void set_value(int value, int start_index, int end_index)
@@ -34,8 +34,15 @@ class parallel_search_result{
         for (int i = start_index; i<end_index; i++)
         {
             this->values[i] = value;
-            this->intis[i] = 1;
+            this->inits[i] = 1;
         }
+    }
+    bool all_set()
+    {
+        bool result = 1;
+        for (int i = 0 ; i<this->inits.size();i++)
+            if (this->inits[i] == 0) result = 0;
+        return result;
     }
 };
 
@@ -164,6 +171,15 @@ void print_vector_bool (vector<bool> v){
     cout<<endl;
 }
 
+
+void print_vector_float (vector<float> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
 void print_vector_2D (vector<vector<int>>input){
     for (int i = 0; i< input.size();i++)
     {
@@ -260,14 +276,14 @@ int binary_search (vector<float>* reference, float query, int begin, int end)
     
 }
 
-void * thread_function(void *input)
+/*void * thread_function(void *input)
 {
     thread_data data = *((thread_data *)input);
     if (data.points.size() == 1)
     {
 
     }
-}
+}*/
 
 struct query_point
 {
@@ -294,6 +310,7 @@ struct spliting_state
 
 spliting_result binary_search_split(vector<float> *input, int start_index, int end_index, float query)
 {
+    cout<<endl<<"one call to binary_search_split with values " <<start_index<<" "<< end_index<<" "<<query;
     int start_orig = start_index;
     int end_orig = end_index;
     bool successful = 0;
@@ -350,13 +367,16 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
 
 spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
 {
-    int middle_index = (start_index + end_reference)/2
-    int middle_value = (*reference)[middle_index]
-    spliting_result split = binary_search_split(&query, start_query, end_query, middle_value)
+    cout<< "one_step_parallel_binary_search is called with values"<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
+    int middle_index = (start_reference + end_reference)/2;
+    int middle_value = (*reference)[middle_index];
+    spliting_result split = binary_search_split(query, start_query, end_query, middle_value);
     int divider1 = split.divider1;
     int divider2 = split.divider2;
+    cout<<endl<<"before set_value"<<endl;
     // assigning result to the found points
     result->set_value((*reference)[divider1], divider1, divider2);
+    cout<<endl<<"after set_value"<<endl;
     spliting_state state;
     state.left_size = abs(divider1 - start_query);
     state.middle_size = divider2 - divider1;
@@ -369,7 +389,7 @@ spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<
 
 void* parallel_binary_search(void * data_void)
 {
-    thread_data* data = (*thread_data)(data_void);
+    thread_data* data = (thread_data*)(data_void);
     vector<float> * reference = data->reference;
     vector<float> * query = data->query;
     int start_reference = data->start_reference;
@@ -378,60 +398,49 @@ void* parallel_binary_search(void * data_void)
     int end_query = data->end_query;
     parallel_search_result* result = data->result;
     vector<pthread_t*>* threads = data->threads;
+    cout<<"one call to main function with values"<<start_reference<<" "<< end_reference<<" "<< start_query<<" "<<end_query<<endl;
     if ((end_reference - start_reference) < 5)
     {
+        cout<<"running parallel_binary_search with reference size smaller than 5"<<endl;
         for (int q = 0 ; q<= end_query;q++)
         {
-            int binary_search (vector<float>* reference, float query, int begin, int end)
+            int binary_search (vector<float>* reference, float query, int begin, int end);
             int single_result = binary_search(reference, (*query)[q], start_reference, end_reference);
             result->set_value(single_result, q, q+1);
         }
     }
-
-    int middle_index = (start_index + end_reference)/2
+    int middle_index = (start_reference + end_reference)/2;
+    spliting_state state;
     do{
-    spliting_state state = one_step_parallel_binary_search(reference , query , start_reference, end_reference , start_query, end_query, result);
-    while(state.left_size > 1)
+    cout<<"calling one_step_parallel_binary_search"<<endl;
+    state = one_step_parallel_binary_search(reference , query , start_reference, end_reference , start_query, end_query, result);
+    cout<<"successful call to one_step_parallel_binary_search"<<endl;
         if(state.right_size > 0)
         {
             pthread_t* temp = new pthread_t;           
+            cout<<endl<<"thread cretaed"<<endl;
             threads->push_back(temp);
             thread_data* args;
             args->reference = reference;
             args->query = query;
             args->start_reference = middle_index + 1;
             args->end_reference = end_reference;
-            arg->start_query = state.divider2;
+            args->start_query = state.divider2;
             args->end_query = end_query;
-            args-result = result;
+            args->result = result;
             args->threads = threads;
+            cout<<"starting creating thread with valus"<<args->start_reference<<" "<<args->end_reference<<" "<<args->start_query<<" "<<args->end_query<<endl;
             pthread_create(temp, NULL, parallel_binary_search, (void*)&args);
         }
     } while(state.left_size>1);
     if (state.left_size == 1)
         {
             int signle_result = binary_search(reference, (*query)[start_query], start_query, middle_index -1);
-            result->set_value(*(reference)[signle_result], start_query, start_query+1);
+            result->set_value((*reference)[signle_result], start_query, start_query+1);
         }
 }
-
-
 int main()
 {
-    vector<int> test = {1,3,4,4,4,5,6,8,8,8,9,10,10,12};
-    cout<<"please enter query";
-    int query_number;
-    cin>> query_number;
-
-    spliting_result result = binary_search_split(&test, 0, 13, query_number);
-    cout<<endl<<result.divider1<<" "<<result.divider2;
-
-    return(0);
-
-    //parallel_search_result result(9);
-    //print_vector(result.values);
-    //print_vector_bool(result.intis);
-    return(0);
 	int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
@@ -440,28 +449,90 @@ int main()
     num_query_points = 512;
     int round_size = 64;
 
-    cout<< num_ref_points<<" " << num_query_points<<endl;
+    cout<< "num_ref_points: "<< num_ref_points<<"num_query_points: " << num_query_points<<endl;
     vector<float> sum_cordinates(num_ref_points);
+    vector<float> sum_cordinates_query(round_size);
     for (int i =0 ; i<num_ref_points;i++)
     {
         sum_cordinates[i] = 0;
-        //cout<<endl<<endl;
         for (int j = 0; j<reference.data[0].size();j++)
         {
         sum_cordinates[i] += reference.data[i][j];
-        //cout<<"sum_cordinates "<< sum_cordinates[i]<<" ,"<<"reference "<< reference.data[i][j]<<endl;
         }
     }
-
+    for (int i =0 ; i<round_size;i++)
+    {
+        sum_cordinates_query[i] = 0;
+        for (int j = 0; j<query.data[0].size();j++)
+        {
+        sum_cordinates_query[i] += query.data[i][j];
+        }
+    }
     vector<int> sorted_indices(num_ref_points);
     iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
     sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
     sort( sum_cordinates.begin(),sum_cordinates.end());
 
 
+
+    vector<int> sorted_query(round_size);
+    iota(sorted_query.begin(),sorted_query.end(),0); //Initializing
+    sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
+    sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
+
+
     //print_vector(sum_cordinates);
-    print_vector(sorted_indices);
-    cout<<endl<<sorted_indices.size();
+    //print_vector_float(sum_cordinates);
+    //cout<<"and:"<<endl;
+    //print_vector_float(sum_cordinates_query);
+    //cout<<endl<<sorted_indices.size();
+    /*for (int i = 0; i< 64; i++)
+    {
+        cout<<query.data[i][0]<<", "<<query.data[i][1]<<" ,"<<query.data[i][2]<<endl;
+    }*/
+
+    thread_data args;
+    parallel_search_result round_result (round_size);
+    vector<pthread_t*> round_threads;
+    args.reference = &sum_cordinates;
+    args.query = &sum_cordinates_query;
+    args.start_reference = 0;
+    args.end_reference = reference.data.size();
+    args.start_query = 0;
+    args.end_query = round_size;
+    args.result = &round_result;
+    args.threads = &round_threads;
+    cout<<endl<<endl<<endl<<"start running parallel code"<<endl;
+    parallel_binary_search((void*)(&args));
+
+    while(!(round_result.all_set()))
+        {cout<<"waiting";}
+    for(int t = 0; t<round_threads.size();t++)
+    {
+        pthread_join(*(round_threads[t]),NULL);
+    }
+
+
+/*
+    thread_data* data = (thread_data*)(data_void);
+    vector<float> * reference = data->reference;
+    vector<float> * query = data->query;
+    int start_reference = data->start_reference;
+    int end_reference = data->end_reference;
+    int start_query = data->start_query;
+    int end_query = data->end_query;
+    parallel_search_result* result = data->result;
+    vector<pthread_t*>* threads = data->threads;
+*/
+
+
+
+
+
+
+
+
+
     return(0);
     int num_round = num_query_points / round_size;
     for (int round = 0 ; round < num_round;round++)
