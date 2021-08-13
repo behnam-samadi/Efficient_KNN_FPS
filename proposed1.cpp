@@ -57,17 +57,17 @@ float calc_distance (vector<float> v1, vector<float> v2, string type)
     
     if (type == "Modified_Manhattan")
     {
-    	float sum1 = 0;
-    	float sum2 = 0;
-    	for(int i = 0; i<v1.size();i++)
-    		sum1+=v1[i];
-    	for(int i = 0; i<v2.size();i++)
-    		sum2+=v2[i];
-    	return (abs(sum2 - sum1));
+        float sum1 = 0;
+        float sum2 = 0;
+        for(int i = 0; i<v1.size();i++)
+            sum1+=v1[i];
+        for(int i = 0; i<v2.size();i++)
+            sum2+=v2[i];
+        return (abs(sum2 - sum1));
     }
     else
     {
-    	float sum = 0;
+        float sum = 0;
     for(int i = 0; i<v1.size();i++)
     {
         if (type=="Euclidean")
@@ -130,8 +130,8 @@ Frame read_data (string file_adress, int points_dim, int output_dims)
     }
     
 }
-	frame.data = data;
-	return(frame);
+    frame.data = data;
+    return(frame);
 }
 
 vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int num_query=0){
@@ -286,7 +286,6 @@ int binary_search (vector<float>* reference, float query, int begin, int end)
     thread_data data = *((thread_data *)input);
     if (data.points.size() == 1)
     {
-
     }
 }*/
 
@@ -320,7 +319,7 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
     int end_orig = end_index;
     bool successful = 0;
     int middle_index;
-    while (end_index >= start_index)
+    while (end_index > start_index)
     {
         middle_index = (end_index + start_index) / 2;
         if (query > (*input)[middle_index])
@@ -335,6 +334,14 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
         {
             successful = 1;
             break;
+        }       
+    }
+    if(start_index == end_index)
+    {
+        middle_index = (end_index + start_index) / 2;
+        if(query == (*input)[middle_index])
+        {
+            successful = 1;
         }       
     }
     spliting_result result;
@@ -384,9 +391,9 @@ spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<
     result->set_value((*reference)[divider1], divider1, divider2);
     //cout<<endl<<"after set_value"<<endl;
     spliting_state state;
-    state.left_size = abs(divider1 - start_query);
-    state.middle_size = divider2 - divider1;
-    state.right_size = abs(divider2 - end_query);
+    state.left_size = max(divider1 - start_query, 0);
+    state.middle_size = max(divider2 - divider1, 0);
+    state.right_size = max(end_query - divider2, 0);
     state.divider1 = divider1;
     state.divider2 = divider2;
     //cout<<"one step returning"<<endl;
@@ -472,6 +479,16 @@ void* parallel_binary_search(void * data_void)
 }
 int main()
 {
+    //test binary_search_split
+    vector<float> test = {1, 1 , 1 ,2.1, 2.2, 2.3, 3, 3, 3, 4.4, 5, 6 ,7 , 7, 7 , 7};
+    while(0)
+    {
+        float float_query;
+        cout<<"enter the query (the size is "<<test.size()<<")"<<endl;
+        cin>> float_query;
+    spliting_result test_r =  binary_search_split(&test, 0,test.size() , float_query);
+    cout<<"result:"<<endl<<test_r.divider1<<" "<<test_r.divider2<<endl;
+    }
     int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
@@ -515,13 +532,31 @@ int main()
     iota(sorted_query.begin(),sorted_query.end(),0); //Initializing
     sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
+
+    cout<<"ine:"<<sorted_query[0];
+    cout<<"va in"<<sorted_indices[59];
     
-    int result = sorted_indices[binary_search (&sum_cordinates, sum_cordinates_query[54], 0, num_ref_points)];
-    cout<<endl<<"sorted_query[0] "<< sorted_query[0]<<" "<<result;
-    exit(0);
+    
+    //binary_search (sorted_indices, float query, int begin, int end)
+    
+    
+    /*print_vector(knn_result[54]);
+    print_vector(knn_result[13]);
+    print_vector(knn_result[14]);
+    print_vector(knn_result[15]);
+    print_vector(knn_result[16]);
+    exit(0);*/
+    //print_vector(sum_cordinates);
+    //print_vector_float(sum_cordinates);
+    //cout<<"and:"<<endl;
+    //print_vector_float(sum_cordinates_query);
+    //cout<<endl<<sorted_indices.size();
+    /*for (int i = 0; i< 64; i++)
+    {
+        cout<<query.data[i][0]<<", "<<query.data[i][1]<<" ,"<<query.data[i][2]<<endl;
+    }*/
 
-
-thread_data* args = new thread_data;
+    thread_data* args = new thread_data;
     parallel_search_result round_result (round_size);
     vector<pthread_t*> round_threads;
     cout<<"round_threads"<<&round_threads<<endl;
@@ -543,56 +578,8 @@ thread_data* args = new thread_data;
     {
         pthread_join(*(round_threads[t]),NULL);
     }
-    
-    return(0);
-    //binary_search (sorted_indices, float query, int begin, int end)
-    int k = 1;
-    
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
-    cout<<knn_result.size()<<endl;
-    cout<<knn_result[0].size();
-    //print_vector_2D(knn_result);
-    cout<<"result"<<endl;
-    print_vector(knn_result[54]);
-    print_vector(knn_result[13]);
-    print_vector(knn_result[14]);
-    print_vector(knn_result[15]);
-    print_vector(knn_result[16]);
-    
-    //print_vector(sum_cordinates);
-    //print_vector_float(sum_cordinates);
-    //cout<<"and:"<<endl;
-    //print_vector_float(sum_cordinates_query);
-    //cout<<endl<<sorted_indices.size();
-    /*for (int i = 0; i< 64; i++)
-    {
-        cout<<query.data[i][0]<<", "<<query.data[i][1]<<" ,"<<query.data[i][2]<<endl;
-    }*/
-/*
-    thread_data* args = new thread_data;
-    parallel_search_result round_result (round_size);
-    vector<pthread_t*> round_threads;
-    cout<<"round_threads"<<&round_threads<<endl;
-    args->reference = &sum_cordinates;
-    args->query = &sum_cordinates_query;
-    args->start_reference = 0;
-    args->end_reference = reference.data.size();
-    args->start_query = 0;
-    args->end_query = round_size;
-    args->result = &round_result;
-    args->threads = &round_threads;
-    cout<<endl<<endl<<endl<<"start running parallel code"<<endl;
-    //args.threads->push_back(new pthread_t);
-    parallel_binary_search((void*)(args));
 
-    //while(!(round_result.all_set()))
-        //{cout<<endl<<"waiting";}
-    for(int t = 0; t<round_threads.size();t++)
-    {
-        pthread_join(*(round_threads[t]),NULL);
-    }
 
-*/
 /*
     thread_data* data = (thread_data*)(data_void);
     vector<float> * reference = data->reference;
@@ -614,6 +601,12 @@ thread_data* args = new thread_data;
 
 
     return(0);
+    int k = 2;
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    cout<<knn_result.size()<<endl;
+    cout<<knn_result[0].size();
+    //print_vector_2D(knn_result);
+    cout<<"result"<<endl;
     int num_round = num_query_points / round_size;
     for (int round = 0 ; round < num_round;round++)
     {
@@ -621,7 +614,7 @@ thread_data* args = new thread_data;
     }
 
     exit(0);
-    
+    //int k = 1;
     //vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
     cout<<knn_result.size()<<endl;
     cout<<knn_result[0].size();
@@ -649,5 +642,5 @@ thread_data* args = new thread_data;
     //vector<float> test2{10, 20 , 30};
     //vector<float> test1{110, 120 , 130};
     //cout<<calc_distance(test1, test2, "Modified_Manhattan");
-    //for 
+    //for (int i = 0 ; i<num_ref_points;i++)cout<<reference.data[i][0]<<","<<reference.data[i][1]<<","<<reference.data[i][2]<<endl;
 }
