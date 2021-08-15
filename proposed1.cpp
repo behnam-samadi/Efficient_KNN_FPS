@@ -40,7 +40,7 @@ class parallel_search_result{
             this->inits[i] = 1;
             cout<<endl<<i<<"'th element is changed to:" << value<<endl;
             //fout<<endl<<i<<"'th element is changed to:" << value<<endl;
-            fout<<endl<<i<<"'th element is changed to:" << value<<endl;
+            //fout<<endl<<i<<"'th element is changed to:" << value<<endl;
         }
     }
     bool all_set()
@@ -311,6 +311,7 @@ struct spliting_state
     int middle_size;
     int divider1;
     int divider2;
+    int middle_index;
 };
 
 spliting_result binary_search_split(vector<float> *input, int start_index, int end_index, float query)
@@ -352,10 +353,9 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
         int divide_point = start_index;
         //cout<<"injppri unsuccessful shod ke "<<(*input)[divide_point]<<" va meghdare qury hast "<<query<<endl;
         //cout<<"az tarafi "<<divide_point<<" "<<end_index<<endl;
-        if ( ((*input)[divide_point] < query)&&(divide_point<end_orig) ) 
+        if ( ((*input)[divide_point] < query)) 
             {cout<<"injoori shod "<<divide_point<<" "<<end_index<<endl; 
-        cout<<
-        divide_point++;}
+        cout<<divide_point++;}
 
         if (end_index == -1) divide_point = 0;
         result.divider1 = divide_point;
@@ -390,9 +390,19 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
 
 spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
 {
+    bool trace = 0;
+    //1 4 120541 120570
+    if ((start_query == 1) &&(end_query==4) &&(start_reference==120541) && (end_reference==120570))
+
+    {
+
+        trace = 1;
+    }
+
     //cout<< "one_step_parallel_binary_search is called with values"<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
     int middle_index = (start_reference + end_reference)/2;
-    int middle_value = (*reference)[middle_index];
+    //fout<<"1:"<<middle_index<<endl;
+    float middle_value = (*reference)[middle_index];
     spliting_result split = binary_search_split(query, start_query, end_query, middle_value);
     int divider1 = split.divider1;
     int divider2 = split.divider2;
@@ -410,7 +420,11 @@ spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<
     state.right_size = max(end_query - divider2 + 1, 0);
     state.divider1 = divider1;
     state.divider2 = divider2;
-    //fout<< endl<<state.left_size<<" "<<state.middle_size<<" "<< state.right_size<<" "<<state.divider1<<" "<<state.divider2<<endl;
+    state.middle_index = middle_index;
+    if (trace)
+    {fout<<endl<<endl<<start_query<<" "<<end_query<<" "<<divider1<<" "<<divider2<<" "<<middle_index<<" "<<middle_value<< endl<<endl;}
+    //fout<< endl<<(end_query - start_query+1)<<" splitted to: "<<  state.left_size<<" "<<state.middle_size<<" "<< state.right_size<<endl;
+    //" "<<state.divider1<<" "<<state.divider2<<endl;
     //cout<<"p returning"<<endl;
     return state;
 }
@@ -427,14 +441,28 @@ void* parallel_binary_search(void * data_void)
     int end_query = data->end_query;
     parallel_search_result* result = data->result;
     vector<pthread_t*>* threads = data->threads;
+    
+
     //fout<<endl<<"one call to main function with values"<<start_reference<<" "<< end_reference<<" "<< start_query<<" "<<end_query<<endl;
-    if (end_query < start_query)
+    
+    int middle_index;
+    spliting_state state;
+    int task_size;
+    do{
+        if ((start_query<=2)&&(end_query>=2))
+    {
+        //fout<<start_query<<" "<<end_query<<" "<< start_reference<<" "<<end_reference<<endl;
+    }
+        
+        
+        //fout<<"2:"<<middle_index<<endl;
+        if (end_query < start_query)
     {
         //fout<<endl<<"deleted because end is smaller than start"<<endl;
         delete data;
         return NULL;
     }
-    if ((end_reference - start_reference) < 5)
+    if ((end_reference - start_reference) < 3)
     {
         cout<<"running parallel_binary_search with reference size smaller than 5"<<endl;
         //fout<<"running parallel_binary_search with reference size smaller than 5"<<endl;
@@ -448,19 +476,17 @@ void* parallel_binary_search(void * data_void)
             int single_result = binary_search(reference, (*query)[q], start_reference, end_reference);
             //fout<<endl<<"smaller than 5 assigning: " <<single_result<<" "<<q<<endl;
             cout<<endl<<"smaller than 5 assigning: " <<single_result<<" "<<q<<endl;
+            //fout<<"2"<<" "<<endl;
             result->set_value(single_result, q, q+1);
         }
         //fout<<endl;
         delete data;
         return NULL;
     }
-    int middle_index = (start_reference + end_reference)/2;
-    spliting_state state;
-    int task_size;
-    do{
-    task_size = end_query - start_query + 1;
+    //task_size = end_query - start_query + 1;
     //cout<<"now, calling one_step_parallel_binary_search with values"<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<" "<<endl;
     state = one_step_parallel_binary_search(reference , query , start_reference, end_reference , start_query, end_query, result);
+    middle_index = state.middle_index;
     //cout<<"successful call to one_step_parallel_binary_search"<<endl;
         if(state.right_size > 0)
         {
@@ -472,15 +498,25 @@ void* parallel_binary_search(void * data_void)
             args->reference = reference;
             args->query = query;
 
-            if (middle_index < end_reference) args->start_reference = middle_index+1;
+            //if (middle_index < end_reference) 
+            args->start_reference = middle_index;//fout<<"oomad too asli"<<endl;}
+
+            //else
+            //{
+                //fout<<"oomad too else"<<endl;
+            //    args->start_reference = middle_index;
+            //}
             args->end_reference = end_reference;
             args->start_query = state.divider2;
             args->end_query = end_query;
             args->result = result;
             args->threads = threads;
+    //fout<<"3:"<<middle_index<<endl;
+
             if (args->end_query >= args->start_query)
             {
-            //fout<<"starting creating thread with values"<<args->start_reference<<" "<<args->end_reference<<" "<<args->start_query<<" "<<args->end_query<<endl;
+            //fout<<endl<<endl<<"starting creating thread with values"<<args->start_reference<<" "<<args->end_reference<<" "<<args->start_query<<" "<<args->end_query<<" "<<middle_index <<"original "<<start_reference<<" "<<end_reference<< endl;
+
             //fout<<"creatign thread: reference: from "<<args->start_reference<<"..........."<<args->end_reference<<"and query from "<<args->start_query<<"............."<<args->end_query<<endl;
             pthread_create(temp, NULL, parallel_binary_search, (void*)args);
             }
@@ -489,16 +525,19 @@ void* parallel_binary_search(void * data_void)
                 delete args;
             }
         }
-        end_query = state.divider1 - 1;
-        end_reference = middle_index-1;
+
+        end_query = state.divider1-1;
+        end_reference = middle_index;
+        //fout<<endl<<endl<<"now left serach is "<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<" with left size " <<state.left_size<<endl<<endl;
     } while(state.left_size>1);
     if (state.left_size == 1)
         {
             //fout<<endl<<start_query<<" is a left point to "<<end_query<<endl;
             //int binary_search (vector<float>* reference, float query, int begin, int end)
             //fout<<endl<<"one point found! "<<start_query<<"to "<<end_query<<endl;
-            int signle_result = binary_search(reference, (*query)[start_query], start_reference, end_reference);
-            result->set_value(signle_result, start_query, start_query+1);
+            int single_result = binary_search(reference, (*query)[start_query], start_reference, end_reference);
+            //fout<<"1"<<" "<<endl;
+            result->set_value(single_result, start_query, start_query+1);
         }
         delete data;
 }
@@ -511,7 +550,7 @@ int main()
         float float_query;
         cout<<"enter the query (the size is "<<test.size()<<")"<<endl;
         cin>> float_query;
-    spliting_result test_r =  binary_search_split(&test, 0,test.size() , float_query);
+    spliting_result test_r =  binary_search_split(&test, 0,test.size()-1 , float_query);
     cout<<"result:"<<endl<<test_r.divider1<<" "<<test_r.divider2<<endl;
     }
     int frame_channels = 3;
@@ -545,12 +584,15 @@ int main()
         sum_cordinates_query[i] += query.data[i][j];
         }
     }
+    
+
     vector<int> sorted_indices(num_ref_points);
     iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
     sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
     sort( sum_cordinates.begin(),sum_cordinates.end());
 
-
+cout<<endl<<endl<<sum_cordinates[120555];
+    //exit(0);
 
     vector<int> sorted_query(round_size);
     iota(sorted_query.begin(),sorted_query.end(),0); //Initializing
@@ -583,15 +625,24 @@ int main()
     {
         cout<<query.data[i][0]<<", "<<query.data[i][1]<<" ,"<<query.data[i][2]<<endl;
     }*/
+    vector<float> test_reference  = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
+    vector<float> test_query = {2.2, 3.5, 21.6, 35.7, 90};
+    spliting_result split = binary_search_split(&test_query, 0, 4, 93);
+    cout<<split.divider1<<" "<<split.divider2<<" ";
+    //exit(0);
+    //round_size = 5;
 
     thread_data* args = new thread_data;
     parallel_search_result round_result (round_size);
     vector<pthread_t*> round_threads;
     cout<<"round_threads"<<&round_threads<<endl;
     args->reference = &sum_cordinates;
+    //args->reference = &test_reference;
     args->query = &sum_cordinates_query;
-    args->start_reference = 0;
+    //args->query = &test_query;
+    //args->start_reference = 0;
     args->end_reference = reference.data.size()-1;
+    //args->end_reference = 39;
     args->start_query = 0;
     args->end_query = round_size-1;
     args->result = &round_result;
@@ -599,13 +650,13 @@ int main()
     cout<<endl<<endl<<endl<<"start running parallel code"<<endl;
     //args.threads->push_back(new pthread_t);
     //spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
-    spliting_state temp_state =  one_step_parallel_binary_search(&sum_cordinates, &sum_cordinates_query, 60507 , num_ref_points, 0,round_size, &round_result);
-    print_vector_float(sum_cordinates_query);
-    cout<<"middle index: "<<60507<<endl;
-    cout<<"middle point "<<sum_cordinates[60507]<<endl;
+    //spliting_state temp_state =  one_step_parallel_binary_search(&sum_cordinates, &sum_cordinates_query, 60507 , num_ref_points, 0,round_size, &round_result);
+    //print_vector_float(sum_cordinates_query);
+    //cout<<"middle index: "<<60507<<endl;
+    //cout<<"middle point "<<sum_cordinates[60507]<<endl;
     //return(0);
 
-    cout<< endl<<temp_state.left_size<<" "<<temp_state.middle_size<<" "<< temp_state.right_size<<" "<<temp_state.divider1<<" "<<temp_state.divider2<<endl;
+    //cout<< endl<<temp_state.left_size<<" "<<temp_state.middle_size<<" "<< temp_state.right_size<<" "<<temp_state.divider1<<" "<<temp_state.divider2<<endl;
     //return (0);
     parallel_binary_search((void*)(args));
 
@@ -618,8 +669,11 @@ int main()
 
     //fout<<endl<<endl<<endl<<"final result"<<endl;
     cout<<endl<<round_threads.size()<<endl;
-
-    //print_vector(round_result.values);
+    for (int p = 0 ; p<round_size;p++)
+    {
+        cout<<p<<" "<<round_result.values[p]<<endl;
+    }
+    print_vector(round_result.values);
     
 
 return(0);
