@@ -7,11 +7,12 @@
 #include <pthread.h>
 #include "numeric"
 #include <limits>
+#include <typeinfo>
 #include <time.h>
 using namespace std;
 
 
-ofstream fout("output.txt");
+
 
 class Frame{
     public:
@@ -448,7 +449,7 @@ int main()
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    num_query_points = 64;
+    num_query_points = 1024;
     int round_size = num_query_points;
     
     vector<float> sum_cordinates(num_ref_points);
@@ -475,6 +476,22 @@ int main()
     iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
     sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
     sort( sum_cordinates.begin(),sum_cordinates.end());
+
+    // print_vector(sorted_indices);
+    for (int q = 0; q<num_query_points;q++)
+    {
+        //int binary_search (vector<float>* reference, float query, int begin, int end)
+        //float calc_distance (vector<float> v1, vector<float> v2, string type);
+        int nearest_index = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points);
+        float euq_min_cut = calc_distance(query.data[q], reference.data[nearest_index], "Euclidean");
+        //cout << typeid(query.data[0]).name() << endl;
+        
+
+        cout<<endl<<euq_min_cut;
+        exit(0);
+    }   
+    exit(0);
+
 
 cout<<endl<<endl<<sum_cordinates[120555];
     //exit(0);

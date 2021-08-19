@@ -7,12 +7,10 @@
 #include <pthread.h>
 #include "numeric"
 #include <limits>
-#include <time.h>
 using namespace std;
 
 
 ofstream fout("output.txt");
-
 class Frame{
     public:
     int num_points;
@@ -21,10 +19,9 @@ class Frame{
 };
 
 class parallel_search_result{
-    
-    public:
     vector <int>  values;
     vector <bool> inits;
+    public:
     parallel_search_result(int size)
     {
         values = vector<int> (size);
@@ -38,12 +35,11 @@ class parallel_search_result{
     {
         for (int i = start_index; i<end_index; i++)
         {
-            if (this->inits[i] == 1)
-            {
-                cout<<endl<<endl<<endl<<"---Double Assigning!!!!!--- for element:"<<i<<" which has value "<<values[i]<<"and is becoming "<<value;
-            }
             this->values[i] = value;
             this->inits[i] = 1;
+            cout<<endl<<i<<"'th element is changed to:" << value<<endl;
+            fout<<endl<<i<<"'th element is changed to:" << value<<endl;
+            //fout<<endl<<i<<"'th element is changed to:" << value<<endl;
         }
     }
     bool all_set()
@@ -61,24 +57,26 @@ float calc_distance (vector<float> v1, vector<float> v2, string type)
     
     if (type == "Modified_Manhattan")
     {
-        float sum1 = 0;
-        float sum2 = 0;
-        for(int i = 0; i<v1.size();i++)
-            sum1+=v1[i];
-        for(int i = 0; i<v2.size();i++)
-            sum2+=v2[i];
-        return (abs(sum2 - sum1));
+    	float sum1 = 0;
+    	float sum2 = 0;
+    	for(int i = 0; i<v1.size();i++)
+    		sum1+=v1[i];
+    	for(int i = 0; i<v2.size();i++)
+    		sum2+=v2[i];
+    	return (abs(sum2 - sum1));
     }
     else
     {
-        float sum = 0;
+    	float sum = 0;
     for(int i = 0; i<v1.size();i++)
     {
         if (type=="Euclidean")
         sum+= pow(abs(v1[i] - v2[i]), 2);
         if (type=="Manhattan")
         sum+= abs(v1[i] - v2[i]);
+        //cout<<"sum become:"<<sum<<"\n";
     }
+    //cout<<"\n"<<"sum:"<<sum;
 
     float result = sum;
     if (type == "Euclidean")
@@ -105,6 +103,7 @@ vector<int> topK(vector<float> input, int K){
                 min_arg = j;
             }
         }
+        //cout<<"maxarg: " <<min_arg<<"\n";
         result[c]  = min_arg;
         input[min_arg] = inf;
 
@@ -131,16 +130,19 @@ Frame read_data (string file_adress, int points_dim, int output_dims)
     }
     
 }
-    frame.data = data;
-    return(frame);
+	frame.data = data;
+	return(frame);
 }
 
 vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int num_query=0){
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
+    //imidiate
+    //num_ref_points = 12;
     if (!(num_query == 0)) num_query_points = num_query;
     vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
     vector<float>  distance (num_ref_points);
+
     for(int i = 0; i<num_query_points;i++){
         cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
@@ -152,6 +154,7 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int
         {
             result[i][c] = topk[c];
         }
+        
     }
 return(result);
 }
@@ -203,8 +206,9 @@ struct thread_data
  int end_query;
  parallel_search_result* result;
  vector<pthread_t*>* threads;
- pthread_mutex_t *push_mutex;
 };
+
+
 
 int binary_search (vector<float>* reference, float query, int begin, int end)
 {
@@ -212,25 +216,34 @@ int binary_search (vector<float>* reference, float query, int begin, int end)
     int end_orig = end;
     int middle_index = (begin + end) / 2;
     float middle = (*reference)[(int)((begin + end) / 2)];
+    //cout<<middle_index<<endl;
+    //cout<<middle<<endl;
+    //exit(0);
     while (end >= begin)
     {
         middle_index = (begin + end) / 2;
         middle = (*reference)[(int)((begin + end) / 2)];
-
+        //cout<<"begin and end"<<begin<<" "<<end<<endl;
         if (query == middle) 
         {
+            //cout<<"inja";
             return (middle_index);
         }
         else if (query > middle) 
         {
+            //cout<<"begin and end in loop"<<begin<<" "<<end<<endl;
+            //cout<<"inja1 ";
+            //cout<<middle_index<<" ";
+            //cout<<begin<<endl;
             begin = middle_index+1;
         }
         else if(query < middle) 
             {
-
+                //cout<<"inja2";
                 end = middle_index-1;
             }
         }
+        //cout<<"unsuccesfull"<<endl;
         float diff1 = abs(query - middle);
         float diff2;
         float diff3;
@@ -249,18 +262,32 @@ int binary_search (vector<float>* reference, float query, int begin, int end)
         {
             diff3 = numeric_limits<float>::max();
         }
+        //cout<<diff1<<" "<<diff2<<" "<<diff3<<endl;
         if ((diff1 <= diff2) && (diff1 <= diff3))  {
+        //cout<<"first"<<endl;
         return(middle_index);
         }
         else if ((diff2 <= diff1) && (diff2 <= diff3))
         {
+            //cout<<"second"<<endl;
             return(middle_index+1);
         }
         else if((diff3 <= diff2) && (diff3 <= diff1)) 
         {
+        //cout<<"third"<<endl;
         return(middle_index-1);
         }
+
+    
 }
+
+/*void * thread_function(void *input)
+{
+    thread_data data = *((thread_data *)input);
+    if (data.points.size() == 1)
+    {
+    }
+}*/
 
 struct query_point
 {
@@ -268,11 +295,13 @@ struct query_point
     int index;
 };
 
+
 struct spliting_result
 {
     int divider1;
     int divider2;
 };
+
 
 struct spliting_state
 {
@@ -281,17 +310,16 @@ struct spliting_state
     int middle_size;
     int divider1;
     int divider2;
-    int middle_index;
 };
 
 spliting_result binary_search_split(vector<float> *input, int start_index, int end_index, float query)
 {
-
+    //cout<<endl<<"one call to binary_search_split with values " <<start_index<<" "<< end_index<<" "<<query;
     int start_orig = start_index;
     int end_orig = end_index;
     bool successful = 0;
     int middle_index;
-    while (end_index > start_index)
+    while (end_index >= start_index)
     {
         middle_index = (end_index + start_index) / 2;
         if (query > (*input)[middle_index])
@@ -308,24 +336,14 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
             break;
         }       
     }
-    if(start_index == end_index)
-    {
-        middle_index = (end_index + start_index) / 2;
-        if(query == (*input)[middle_index])
-        {
-            successful = 1;
-        }       
-    }
     spliting_result result;
     if (!successful)
     {
         int divide_point = start_index;
-        if ( ((*input)[divide_point] < query)) 
-            {divide_point++;}
-
         if (end_index == -1) divide_point = 0;
         result.divider1 = divide_point;
         result.divider2 = divide_point;
+        
     }
     else
     {
@@ -345,27 +363,32 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
         result.divider1 = divide_point1;
         result.divider2 = divide_point2;
     }
+    //cout<<endl<<"one call to binary_search_split with values " <<start_orig<<" "<< end_orig<<" "<<query<<"return valus, divider1"<<result.divider1<<"divider2"<<result.divider2<<endl;
     return result;
+
 }
+
 
 
 spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
 {
-        
+    //cout<< "one_step_parallel_binary_search is called with values"<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
     int middle_index = (start_reference + end_reference)/2;
-    float middle_value = (*reference)[middle_index];
+    int middle_value = (*reference)[middle_index];
     spliting_result split = binary_search_split(query, start_query, end_query, middle_value);
     int divider1 = split.divider1;
     int divider2 = split.divider2;
-    result->set_value(middle_index, divider1, divider2);
-    
+    //cout<<endl<<"before set_value"<<endl;
+    // assigning result to the found points
+    result->set_value((*reference)[divider1], divider1, divider2);
+    //cout<<endl<<"after set_value"<<endl;
     spliting_state state;
-    state.left_size = max(divider1 - start_query, 0);
-    state.middle_size = max(divider2 - divider1, 0);
-    state.right_size = max(end_query - divider2 + 1, 0);
+    state.left_size = abs(divider1 - start_query);
+    state.middle_size = divider2 - divider1;
+    state.right_size = abs(divider2 - end_query);
     state.divider1 = divider1;
     state.divider2 = divider2;
-    state.middle_index = middle_index;
+    //cout<<"one step returning"<<endl;
     return state;
 }
 
@@ -379,77 +402,138 @@ void* parallel_binary_search(void * data_void)
     int end_reference = data->end_reference;
     int start_query = data->start_query;
     int end_query = data->end_query;
-    pthread_mutex_t* push_mutex = data->push_mutex;
     parallel_search_result* result = data->result;
     vector<pthread_t*>* threads = data->threads;
-    int middle_index;
-    spliting_state state;
-    int task_size;
-    do{   
-        cout<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
-    if ((end_reference - start_reference)<2)
+    //cout<<endl<<"one call to main function with values"<<start_reference<<" "<< end_reference<<" "<< start_query<<" "<<end_query<<endl;
+    if (end_query < start_query)
     {
-        for (int q = start_query ; q<= end_query;q++)
-        {
-            int single_result = binary_search(reference, (*query)[q], start_reference, end_reference);
-            result->set_value(single_result, q, q+1);
-            
-        }
+        //fout<<endl<<"deleted because end is smaller than start"<<endl;
         delete data;
-        
         return NULL;
     }
+    if ((end_reference - start_reference) < 5)
+    {
+        cout<<"running parallel_binary_search with reference size smaller than 5"<<endl;
+        //fout<<"running parallel_binary_search with reference size smaller than 5"<<endl;
+        for (int q = start_query ; q<= end_query;q++)
+        {
+            int binary_search (vector<float>* reference, float query, int begin, int end);
+            //fout<<"single binary search is called for: " <<(*query)[q]<<" " <<start_reference<<" "<< end_reference;
+            int single_result = binary_search(reference, (*query)[q], start_reference, end_reference);
+            //fout<<endl<<"smaller than 5 assigning: " <<single_result<<" "<<q<<endl;
+            cout<<endl<<"smaller than 5 assigning: " <<single_result<<" "<<q<<endl;
+            result->set_value(single_result, q, q+1);
+        }
+        delete data;
+        return NULL;
+    }
+    int middle_index = (start_reference + end_reference)/2;
+    spliting_state state;
+    do{
+    //cout<<"now, calling one_step_parallel_binary_search with values"<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<" "<<endl;
     state = one_step_parallel_binary_search(reference , query , start_reference, end_reference , start_query, end_query, result);
-    middle_index = state.middle_index;
+    //cout<<"successful call to one_step_parallel_binary_search"<<endl;
         if(state.right_size > 0)
         {
             pthread_t* temp = new pthread_t;           
-            pthread_mutex_lock(push_mutex);
+            //cout<<endl<<"thread cretaed"<<endl<<threads<<"and temp: "<<temp<<endl;
             threads->push_back(temp);
-            pthread_mutex_unlock(push_mutex);
+            //cout<<"successful threads->push_back(temp)"<<threads->size()<<endl;
             thread_data* args = new thread_data;
             args->reference = reference;
             args->query = query;
-            args->start_reference = middle_index;
+            args->start_reference = middle_index + 1;
             args->end_reference = end_reference;
             args->start_query = state.divider2;
             args->end_query = end_query;
             args->result = result;
             args->threads = threads;
-            args->push_mutex = push_mutex;
             if (args->end_query >= args->start_query)
             {
-                pthread_create(temp, NULL, parallel_binary_search, (void*)args);
+            cout<<"starting creating thread with valus"<<args->start_reference<<" "<<args->end_reference<<" "<<args->start_query<<" "<<args->end_query<<endl;
+            //fout<<"creatign thread: reference: from "<<args->start_reference<<"..........."<<args->end_reference<<"and query from "<<args->start_query<<"............."<<args->end_query<<endl;
+            pthread_create(temp, NULL, parallel_binary_search, (void*)args);
             }
             else
             {
                 delete args;
             }
         }
-
-        end_query = state.divider1-1;
+        end_query = state.divider1 - 1;
         end_reference = middle_index;
     } while(state.left_size>1);
     if (state.left_size == 1)
         {
-            int single_result = binary_search(reference, (*query)[start_query], start_reference, end_reference);
-            result->set_value(single_result, start_query, start_query+1);
-            
+            int signle_result = binary_search(reference, (*query)[start_query], start_query, middle_index -1);
+            result->set_value((*reference)[signle_result], start_query, start_query+1);
         }
         delete data;
-        
 }
 int main()
 {
-      
-    
-    int frame_channels = 3;
+	int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    num_query_points = 64;
-    int round_size = num_query_points;
+    num_query_points = 512;
+    int round_size = 64;
+
+    cout<< "num_ref_points: "<< num_ref_points<<"num_query_points: " << num_query_points<<endl;
+
+    
+    int k = 5;
+    int test_size = 50;
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    for (int i = 0 ; i<test_size; i++)
+    {
+        for (int j = 0 ; j<test_size;j++)
+        {
+            cout<<knn_result[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+
+    vector<float> sum_cordinates(num_ref_points);
+    for (int i =0 ; i<num_ref_points;i++)
+    {
+        sum_cordinates[i] = 0;
+        for (int j = 0; j<reference.data[0].size();j++)
+        {
+        sum_cordinates[i] += reference.data[i][j];
+        }
+    }
+
+vector<float> sum_cordinates_query(round_size);
+
+    for (int i =0 ; i<round_size;i++)
+    {
+        sum_cordinates_query[i] = 0;
+        for (int j = 0; j<query.data[0].size();j++)
+        {
+        sum_cordinates_query[i] += query.data[i][j];
+        }
+    }
+
+vector<int> sorted_indices(num_ref_points);
+    iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
+    sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
+    sort( sum_cordinates.begin(),sum_cordinates.end());
+
+    for (int q = 0 ; q<test_size;q++)
+    {
+        int result = sorted_indices[binary_search (&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points)];
+        cout<<endl<<result;
+    }
+    cout<<endl;
+    
+
+    exit(0);
+
+/*
+    cout<<knn_result.size()<<endl;
+    cout<<knn_result[0].size();
     
     vector<float> sum_cordinates(num_ref_points);
     vector<float> sum_cordinates_query(round_size);
@@ -469,119 +553,66 @@ int main()
         sum_cordinates_query[i] += query.data[i][j];
         }
     }
-    
-
     vector<int> sorted_indices(num_ref_points);
     iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
     sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
     sort( sum_cordinates.begin(),sum_cordinates.end());
-
-cout<<endl<<endl<<sum_cordinates[120555];
-    //exit(0);
-
     vector<int> sorted_query(round_size);
     iota(sorted_query.begin(),sorted_query.end(),0); //Initializing
     sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
-
-
-    int k = 20;
+    cout<<"ine:"<<sorted_query[0];
+    cout<<"va in"<<sorted_indices[59];
+    exit(0);
     
-    vector<float> test_reference  = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
-    vector<float> test_query = {2.2, 3.5, 21.6, 35.7, 90};
-    spliting_result split = binary_search_split(&test_query, 0, 4, 93);
-    cout<<split.divider1<<" "<<split.divider2<<" ";
+    //binary_search (sorted_indices, float query, int begin, int end)
+    
+    int k = 2;
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    cout<<knn_result.size()<<endl;
+    cout<<knn_result[0].size();
+    //print_vector_2D(knn_result);
+    cout<<"result"<<endl;
+    print_vector(knn_result[54]);
+    print_vector(knn_result[13]);
+    print_vector(knn_result[14]);
+    print_vector(knn_result[15]);
+    print_vector(knn_result[16]);
+    exit(0);
+    //print_vector(sum_cordinates);
+    //print_vector_float(sum_cordinates);
+    //cout<<"and:"<<endl;
+    //print_vector_float(sum_cordinates_query);
+    //cout<<endl<<sorted_indices.size();
+    /*for (int i = 0; i< 64; i++)
+    {
+        cout<<query.data[i][0]<<", "<<query.data[i][1]<<" ,"<<query.data[i][2]<<endl;
+    }*/
 
-
-
-    float begin_time = clock();
     thread_data* args = new thread_data;
     parallel_search_result round_result (round_size);
     vector<pthread_t*> round_threads;
     cout<<"round_threads"<<&round_threads<<endl;
     args->reference = &sum_cordinates;
-    //args->reference = &test_reference;
     args->query = &sum_cordinates_query;
-    //args->query = &test_query;
-    //args->start_reference = 0;
-    args->end_reference = reference.data.size()-1;
-    //args->end_reference = 39;
+    args->start_reference = 0;
+    args->end_reference = reference.data.size();
     args->start_query = 0;
-    args->end_query = round_size-1;
+    args->end_query = round_size;
     args->result = &round_result;
     args->threads = &round_threads;
-    args->push_mutex = new pthread_mutex_t;
-    pthread_t * main_thread = new pthread_t;
-    round_threads.push_back(main_thread);
-    pthread_mutex_init(args->push_mutex,0);
-    pthread_create( main_thread, NULL, parallel_binary_search, (void*)args);
     cout<<endl<<endl<<endl<<"start running parallel code"<<endl;
     //args.threads->push_back(new pthread_t);
-    //spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
-    //spliting_state temp_state =  one_step_parallel_binary_search(&sum_cordinates, &sum_cordinates_query, 60507 , num_ref_points, 0,round_size, &round_result);
-    //print_vector_float(sum_cordinates_query);
-    //cout<<"middle index: "<<60507<<endl;
-    //cout<<"middle point "<<sum_cordinates[60507]<<endl;
-    //return(0);
+    parallel_binary_search((void*)(args));
 
-    //cout<< endl<<temp_state.left_size<<" "<<temp_state.middle_size<<" "<< temp_state.right_size<<" "<<temp_state.divider1<<" "<<temp_state.divider2<<endl;
-    //return (0);
-    
-    
-    //parallel_binary_search((void*)(args));
-
-    while(!(round_result.all_set()));
+    //while(!(round_result.all_set()))
         //{cout<<endl<<"waiting";}
     for(int t = 0; t<round_threads.size();t++)
     {
         pthread_join(*(round_threads[t]),NULL);
     }
-    //delete args;
-    for (int tn = 0; tn < round_threads.size();tn++)
-    {
-
-        delete round_threads[tn];
-        //cout<<endl<<"for thread "<<tn<<endl;
-    }
-    //delete args->push_mutex;
-    //delete main_thread;    
-    float elapsed = clock() - begin_time;
-    cout<<endl<<elapsed<<endl;
-    exit(0);   
-
-cout<<"obtained results"<<endl;
-    for (int q = 0 ; q<round_size;q++)
-    {
-        cout<<endl<<q<<"'th element: "<<sorted_indices[round_result.values[q]];
-        //cout<<endl<<result;
-    }
-    cout<<endl;
 
 
-
-cout<<"correct results:"<<endl;
-    for (int q = 0 ; q<round_size;q++)
-    {
-        
-        int result = binary_search (&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points);
-        cout<<endl<< q<<"'th element "<<sorted_indices[result];
-    }
-    cout<<endl;
-
-    exit(0);
-
-    //fout<<endl<<endl<<endl<<"final result"<<endl;
-    //cout<<endl<<round_threads.size()<<endl;
-    
-    //print_vector(round_result.values);
-    for (int p = 0 ;p <round_result.values.size();p++)
-    {
-        if (!(round_result.inits[p])) {cout<<endl<<"falut!!!"<<endl;exit(0);}
-        cout<<endl<<p<<": "<<round_result.values[p]<<endl;
-    }
-    
-
-return(0);
 /*
     thread_data* data = (thread_data*)(data_void);
     vector<float> * reference = data->reference;
@@ -599,27 +630,10 @@ return(0);
 
 
 
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
 
-    //cout<<knn_result.size()<<endl;
-    //cout<<knn_result[0].size();
-    cout<<endl<<"54's result:"<<endl;
-    //12640
-    print_vector(knn_result[54]);
-    //return(0);
-
-
-    cout<<"ine:"<<sorted_query[0];
-    cout<<"va in"<<sorted_indices[59];
 
 
     return(0);
-    //int k = 2;
-    //vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
-    //cout<<knn_result.size()<<endl;
-    //cout<<knn_result[0].size();
-    //print_vector_2D(knn_result);
-    //cout<<"result"<<endl;
     int num_round = num_query_points / round_size;
     for (int round = 0 ; round < num_round;round++)
     {
@@ -636,20 +650,25 @@ return(0);
     int mathces = 0;
     for (int i = 0; i<num_query_points;i++)
     {
-        for (int j = 0 ; j < k ; j++)
-        {
-            bool found = false;
-            for (int c= 0; c<k;c++)
-            {
-                if(knn_result[i][j]==ground_truth[i][c])
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (found == true) mathces++;
-        }
+    	for (int j = 0 ; j < k ; j++)
+    	{
+    		bool found = false;
+    		for (int c= 0; c<k;c++)
+    		{
+    			if(knn_result[i][j]==ground_truth[i][c])
+    			{
+	    			found = true;
+	    			break;
+    			}
+    		}
+    		if (found == true) mathces++;
+    	}
     }
     cout<<(float)mathces/((float)num_query_points*(float)k);
+
+    //vector<float> test2{10, 20 , 30};
+    //vector<float> test1{110, 120 , 130};
+    //cout<<calc_distance(test1, test2, "Modified_Manhattan");
+    //for (int i = 0 ; i<num_ref_points;i++)cout<<reference.data[i][0]<<","<<reference.data[i][1]<<","<<reference.data[i][2]<<endl;
 
 }
