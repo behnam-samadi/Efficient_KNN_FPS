@@ -476,20 +476,71 @@ int main()
     iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
     sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
     sort( sum_cordinates.begin(),sum_cordinates.end());
-
+int sum_prone_points = 0;
+vector<int> result_1NN (num_query_points);
     // print_vector(sorted_indices);
     for (int q = 0; q<num_query_points;q++)
     {
+        cout<<endl<<q<<"from "<<num_query_points;
         //int binary_search (vector<float>* reference, float query, int begin, int end)
         //float calc_distance (vector<float> v1, vector<float> v2, string type);
         int nearest_index = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points);
         float euq_min_cut = calc_distance(query.data[q], reference.data[nearest_index], "Euclidean");
+        int start_bucket = nearest_index;
+        int end_bucket = nearest_index;
+        
+        while ((start_bucket>=0)&&(abs(sum_cordinates[start_bucket]- sum_cordinates_query[q]) <= euq_min_cut))
+        {
+            start_bucket--;
+        }
+        if (start_bucket<0) start_bucket++;
+
+
+        while ((end_bucket<num_query_points)&&(abs(sum_cordinates[end_bucket]- sum_cordinates_query[q]) <= euq_min_cut))
+        {
+            end_bucket++;
+        }
+        if (end_bucket>=num_query_points) end_bucket--;
+        for (int c = start_bucket; c<=end_bucket;c++)
+        {
+            float dist = calc_distance(query.data[q], reference.data[nearest_index], "Euclidean");
+            if (dist < euq_min_cut)
+            {
+                nearest_index = c;
+                euq_min_cut = dist;
+            }
+        }
+        result_1NN[q] = sorted_indices[nearest_index];
+        sum_prone_points+=(end_bucket - start_bucket+1);
+        //cout<<end_bucket - start_bucket + 1<<endl;
+        //cout<<start_bucket<<" "<<end_bucket<<endl;
+
         //cout << typeid(query.data[0]).name() << endl;
         
 
-        cout<<endl<<euq_min_cut;
-        exit(0);
+        //cout<<endl<<euq_min_cut;
+        //exit(0);
     }   
+    //for (int q = 0 ; q<num_query_points;q++)
+    //{
+    //    cout<<q<<" : "<<result_1NN[q]<<endl;
+    //}
+    int k = 1;
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    int num_fault = 0;
+    for (int q = 0; q<knn_result.size();q++)
+    {
+        cout<<endl<<q<<" : "<< knn_result[q][0]<<" "<<result_1NN[q];
+        if (knn_result[q][0] != result_1NN[q]) 
+        {
+            num_fault++;
+        }
+    }
+    cout<<endl<<num_fault;
+    exit(0);
+    float avg_prone_points = sum_prone_points / num_query_points;
+    float percent = 1-(avg_prone_points / num_ref_points);
+    cout<<endl<<percent<<endl;
     exit(0);
 
 
@@ -502,7 +553,7 @@ cout<<endl<<endl<<sum_cordinates[120555];
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
 
-    int k = 20;
+    //int k = 20;
     
     vector<float> test_reference  = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
     vector<float> test_query = {2.2, 3.5, 21.6, 35.7, 90};
@@ -616,7 +667,7 @@ return(0);
 
 
 
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    //vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
 
     //cout<<knn_result.size()<<endl;
     //cout<<knn_result[0].size();
