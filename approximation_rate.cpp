@@ -143,7 +143,7 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int
     vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
     vector<float>  distance (num_ref_points);
     for(int i = 0; i<num_query_points;i++){
-        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
             distance[j] = calc_distance(query.data[i], reference.data[j], metric);
@@ -451,6 +451,9 @@ int main()
     int num_query_points = query.data.size();
     num_query_points = 1024;
     int round_size = num_query_points;
+
+
+    float start_proposed = clock();
     
     vector<float> sum_cordinates(num_ref_points);
     vector<float> sum_cordinates_query(round_size);
@@ -481,7 +484,7 @@ vector<int> result_1NN (num_query_points);
     // print_vector(sorted_indices);
     for (int q = 0; q<num_query_points;q++)
     {
-        cout<<endl<<q<<"from "<<num_query_points;
+        //cout<<endl<<q<<"from "<<num_query_points;
         //int binary_search (vector<float>* reference, float query, int begin, int end)
         //float calc_distance (vector<float> v1, vector<float> v2, string type);
         int nearest_index = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points);
@@ -496,14 +499,14 @@ vector<int> result_1NN (num_query_points);
         if (start_bucket<0) start_bucket++;
 
 
-        while ((end_bucket<num_query_points)&&(abs(sum_cordinates[end_bucket]- sum_cordinates_query[q]) <= euq_min_cut))
+        while ((end_bucket<num_ref_points)&&(abs(sum_cordinates[end_bucket]- sum_cordinates_query[q]) <= euq_min_cut))
         {
             end_bucket++;
         }
-        if (end_bucket>=num_query_points) end_bucket--;
+        if (end_bucket>=num_ref_points) end_bucket--;
         for (int c = start_bucket; c<=end_bucket;c++)
         {
-            float dist = calc_distance(query.data[q], reference.data[nearest_index], "Euclidean");
+            float dist = calc_distance(query.data[q], reference.data[sorted_indices[c]], "Euclidean");
             if (dist < euq_min_cut)
             {
                 nearest_index = c;
@@ -521,22 +524,28 @@ vector<int> result_1NN (num_query_points);
         //cout<<endl<<euq_min_cut;
         //exit(0);
     }   
+    float end_proposed = clock();
     //for (int q = 0 ; q<num_query_points;q++)
     //{
     //    cout<<q<<" : "<<result_1NN[q]<<endl;
     //}
     int k = 1;
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    vector<vector<int>> knn_result = KNN(reference, query, k, "Euclidean",num_query_points);
     int num_fault = 0;
     for (int q = 0; q<knn_result.size();q++)
     {
+
         cout<<endl<<q<<" : "<< knn_result[q][0]<<" "<<result_1NN[q];
         if (knn_result[q][0] != result_1NN[q]) 
         {
             num_fault++;
         }
     }
-    cout<<endl<<num_fault;
+    //cout<<endl<<num_fault;
+    float end_traditional = clock();
+    float elapsed_proposed = end_proposed - start_proposed;
+    float elapsed_traditional = end_traditional - end_proposed;
+    cout<<"proprosed: "<<elapsed_proposed<<" elapsed_traditional:"<<elapsed_traditional<<  " speedup: "<<(elapsed_traditional - elapsed_proposed)/elapsed_traditional;
     exit(0);
     float avg_prone_points = sum_prone_points / num_query_points;
     float percent = 1-(avg_prone_points / num_ref_points);
