@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <limits>
 #include<cmath>
 #include <pthread.h>
 #include "numeric"
@@ -90,13 +91,13 @@ float calc_distance (vector<float> v1, vector<float> v2, string type)
 
 
 vector<int> topK(vector<float> input, int K){
-    float inf = 0;
-    for (int i = i ; i< input.size();i++)
-    {
-        if (input[i] > inf) inf = i;
-    }
-    inf = inf + 100;
-
+    //float inf = 0;
+    //for (int i = i ; i< input.size();i++)
+    //{
+     //   if (input[i] > inf) inf = i;
+    //}
+    //inf = inf + 100;
+    float inf = std::numeric_limits<float>::max();
     vector<int> result(K);
     for (int c = 0; c<K; c++){
         int min_arg = 0;
@@ -541,7 +542,7 @@ vector<int> result_1NN (num_query_points);
             num_fault++;
         }
     }
-    //cout<<endl<<num_fault;
+    cout<<endl<<"num_fault"<<num_fault<<endl;
     float end_traditional = clock();
     float elapsed_proposed = end_proposed - start_proposed;
     float elapsed_traditional = end_traditional - end_proposed;

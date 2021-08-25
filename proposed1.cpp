@@ -5,13 +5,22 @@
 #include <algorithm>
 #include<cmath>
 #include <pthread.h>
+#include <limits>
 #include "numeric"
 #include <limits>
+#include <omp.h>
 #include <time.h>
 using namespace std;
 
-
+//cleaning
 ofstream fout("output.txt");
+
+enum dist_metric
+{
+    Modified_Manhattan,
+    Euclidean,
+    Manhattan
+};
 
 class Frame{
     public:
@@ -20,8 +29,7 @@ class Frame{
     vector<vector<float>> data;
 };
 
-class parallel_search_result{
-    
+class parallel_search_result{  
     public:
     vector <int>  values;
     vector <bool> inits;
@@ -56,10 +64,10 @@ class parallel_search_result{
 };
 
 
-float calc_distance (vector<float> v1, vector<float> v2, string type)
+float calc_distance (vector<float> v1, vector<float> v2, dist_metric type)
 {
     
-    if (type == "Modified_Manhattan")
+    if (type == Modified_Manhattan)
     {
         float sum1 = 0;
         float sum2 = 0;
@@ -72,30 +80,23 @@ float calc_distance (vector<float> v1, vector<float> v2, string type)
     else
     {
         float sum = 0;
-    for(int i = 0; i<v1.size();i++)
-    {
-        if (type=="Euclidean")
-        sum+= pow(abs(v1[i] - v2[i]), 2);
-        if (type=="Manhattan")
-        sum+= abs(v1[i] - v2[i]);
-    }
-
-    float result = sum;
-    if (type == "Euclidean")
-        result = sqrt(result);
-    return(result);
-    }
+        for(int i = 0; i<v1.size();i++)
+        {
+            if (type==Euclidean)
+            sum+= pow(abs(v1[i] - v2[i]), 2);
+            if (type==Manhattan)
+            sum+= abs(v1[i] - v2[i]);
+        }
+        float result = sum;
+        if (type == Euclidean)
+            result = sqrt(result);
+        return(result);
+        }
 }
 
 
 vector<int> topK(vector<float> input, int K){
-    float inf = 0;
-    for (int i = i ; i< input.size();i++)
-    {
-        if (input[i] > inf) inf = i;
-    }
-    inf = inf + 100;
-
+    float inf = std::numeric_limits<float>::max();
     vector<int> result(K);
     for (int c = 0; c<K; c++){
         int min_arg = 0;
@@ -107,7 +108,6 @@ vector<int> topK(vector<float> input, int K){
         }
         result[c]  = min_arg;
         input[min_arg] = inf;
-
     }
 return (result);
 }
@@ -135,7 +135,7 @@ Frame read_data (string file_adress, int points_dim, int output_dims)
     return(frame);
 }
 
-vector<vector<int>> KNN (Frame reference, Frame query, int K,string metric,  int num_query=0){
+vector<vector<int>> KNN (Frame reference, Frame query, int K,dist_metric metric,  int num_query=0){
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     if (!(num_query == 0)) num_query_points = num_query;
@@ -386,7 +386,7 @@ void* parallel_binary_search(void * data_void)
     spliting_state state;
     int task_size;
     do{   
-        cout<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
+        //cout<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
     if ((end_reference - start_reference)<2)
     {
         for (int q = start_query ; q<= end_query;q++)
@@ -493,8 +493,10 @@ cout<<endl<<endl<<sum_cordinates[120555];
     cout<<split.divider1<<" "<<split.divider2<<" ";
 
 
+    double runTime = -omp_get_wtime();
 
-    float begin_time = clock();
+    //float begin_time = clock();
+
     thread_data* args = new thread_data;
     parallel_search_result round_result (round_size);
     vector<pthread_t*> round_threads;
@@ -545,8 +547,9 @@ cout<<endl<<endl<<sum_cordinates[120555];
     }
     //delete args->push_mutex;
     //delete main_thread;    
-    float elapsed = clock() - begin_time;
-    cout<<endl<<elapsed<<endl;
+    //float elapsed = clock() - begin_time;
+    runTime += omp_get_wtime();
+    cout<<endl<<runTime<<endl;
     exit(0);   
 
 cout<<"obtained results"<<endl;
@@ -599,7 +602,7 @@ return(0);
 
 
 
-    vector<vector<int>> knn_result = KNN(reference, query, k, "Modified_Manhattan",num_query_points);
+    vector<vector<int>> knn_result = KNN(reference, query, k, Modified_Manhattan,num_query_points);
 
     //cout<<knn_result.size()<<endl;
     //cout<<knn_result[0].size();
@@ -632,7 +635,7 @@ return(0);
     cout<<knn_result.size()<<endl;
     cout<<knn_result[0].size();
     print_vector_2D(knn_result);
-    vector<vector<int>>  ground_truth = KNN(reference, query, k, "Euclidean",num_query_points);
+    vector<vector<int>>  ground_truth = KNN(reference, query, k, Euclidean,num_query_points);
     int mathces = 0;
     for (int i = 0; i<num_query_points;i++)
     {
