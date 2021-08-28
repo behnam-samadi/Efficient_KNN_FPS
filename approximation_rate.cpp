@@ -485,6 +485,7 @@ vector<int> result_1NN (num_query_points);
     // print_vector(sorted_indices);
     for (int q = 0; q<num_query_points;q++)
     {
+        cout<<endl<<q<<" from "<<num_query_points;
         //cout<<endl<<q<<"from "<<num_query_points;
         //int binary_search (vector<float>* reference, float query, int begin, int end)
         //float calc_distance (vector<float> v1, vector<float> v2, string type);
@@ -505,6 +506,7 @@ vector<int> result_1NN (num_query_points);
             end_bucket++;
         }
         if (end_bucket>=num_ref_points) end_bucket--;
+        /*
         for (int c = start_bucket; c<=end_bucket;c++)
         {
             float dist = calc_distance(query.data[q], reference.data[sorted_indices[c]], "Euclidean");
@@ -514,10 +516,12 @@ vector<int> result_1NN (num_query_points);
                 euq_min_cut = dist;
             }
         }
+
         result_1NN[q] = sorted_indices[nearest_index];
+        */
         sum_prone_points+=(end_bucket - start_bucket+1);
         //cout<<end_bucket - start_bucket + 1<<endl;
-        //cout<<start_bucket<<" "<<end_bucket<<endl;
+        cout<<"bucket properties: "<<start_bucket<<" "<<nearest_index<<" "<<end_bucket<<endl;
 
         //cout << typeid(query.data[0]).name() << endl;
         
@@ -525,6 +529,11 @@ vector<int> result_1NN (num_query_points);
         //cout<<endl<<euq_min_cut;
         //exit(0);
     }   
+    float avg_prone_points = sum_prone_points / num_query_points;
+    float percent = 1-(avg_prone_points / num_ref_points);
+    cout<<endl<<percent;
+    exit(0);
+
     float end_proposed = clock();
     //for (int q = 0 ; q<num_query_points;q++)
     //{
@@ -547,9 +556,9 @@ vector<int> result_1NN (num_query_points);
     float elapsed_proposed = end_proposed - start_proposed;
     float elapsed_traditional = end_traditional - end_proposed;
     cout<<"proprosed: "<<elapsed_proposed<<" elapsed_traditional:"<<elapsed_traditional<<  " speedup: "<<(elapsed_traditional - elapsed_proposed)/elapsed_traditional;
-    exit(0);
-    float avg_prone_points = sum_prone_points / num_query_points;
-    float percent = 1-(avg_prone_points / num_ref_points);
+    //exit(0);
+    //float avg_prone_points = sum_prone_points / num_query_points;
+    //float percent = 1-(avg_prone_points / num_ref_points);
     cout<<endl<<percent<<endl;
     exit(0);
 

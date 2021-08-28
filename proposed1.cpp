@@ -5,6 +5,7 @@
 #include <algorithm>
 #include<cmath>
 #include <pthread.h>
+#include <queue>
 #include <limits>
 #include "numeric"
 #include <limits>
@@ -349,6 +350,106 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
 }
 
 
+//exact_knn_projected(output, &sum_cordinates,&sorted_indices,20, 80,1564,  int num_ref_point)
+void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float>query,  vector<float> * reference_projected,vector<int>* sorted_indices,float qury_projected, int nearest_index, int K, int row, int num_ref_points)
+{
+    int start_knn = nearest_index;
+    int end_knn = nearest_index;
+    bool left_candidate;
+    bool right_candidate;
+    float middle_value = (*reference_projected)[nearest_index];
+    while((end_knn - start_knn + 1) < K)
+    {
+        if (start_knn ==0)    
+        {
+            end_knn += (K - (end_knn - start_knn + 1));
+            break;
+        }
+        if (end_knn == num_ref_points-1)
+        {
+            start_knn -= (K - (end_knn - start_knn + 1));
+            break;
+        }
+        if ((abs((*reference_projected)[start_knn-1]-middle_value)) < (abs((*reference_projected)[end_knn+1]-middle_value)))
+        {
+            start_knn--;
+        }
+        else
+        {
+            end_knn++;
+        }
+    }
+    int max_index = start_knn;
+    float max_dist = calc_distance((*reference).data[start_knn], query, Euclidean);
+    float dist;
+    priority_queue<pair<float, int>> knn;
+    for(int c = start_knn; c<= end_knn; c++)
+    {
+        dist = calc_distance((*reference).data[c], query, Euclidean);
+        knn.push(make_pair(dist, c));
+        if (dist > max_dist)
+        {
+            max_dist = dist;
+            max_index = c;
+        }
+    }
+    int right_arrow = end_knn;
+    int left_arrow = start_knn;
+
+    max_dist = knn.top().first;
+    cout<<"first..."<<endl;
+
+      //while(knn.size())
+    //{
+        //cout<<endl<<knn.top().first<<" "<<knn.top().second;
+        //knn.pop();
+    //}
+    cout<<"and then..."<<endl;
+
+    while(abs((*reference_projected)[right_arrow] - (*reference_projected)[nearest_index] <= max_dist))
+    {
+        dist = calc_distance((*reference).data[right_arrow], query, Euclidean);
+        if (dist < max_dist)
+        {
+            max_dist = dist;
+            knn.pop();
+            knn.push(make_pair(dist, right_arrow));
+            cout<<endl<<"in top while";
+            cout<<endl<<dist<<" "<<right_arrow;
+        }
+        right_arrow++;
+        if (right_arrow == num_ref_points-1)
+            break;
+    }
+        while(abs((*reference_projected)[left_arrow] - (*reference_projected)[nearest_index] <= max_dist))
+    {
+        dist = calc_distance((*reference).data[left_arrow], query, Euclidean);
+        if (dist < max_dist)
+        {
+            max_dist = dist;
+            knn.pop();
+            knn.push(make_pair(dist, left_arrow));
+            cout<<endl<<"in down while";
+            cout<<endl<<dist<<" "<<left_arrow;
+        }
+        left_arrow--;
+        if (left_arrow==0) break;
+    }
+
+//    while(abs((*reference_projected)[left_arrow] - (*reference_projected)[nearest_index] <= max_dist)
+//    {
+
+  //  }
+
+    while(knn.size())
+    {
+        cout<<endl<<knn.top().first<<" "<<knn.top().second;
+        knn.pop();
+    }
+
+    exit(0);
+}
+
 spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
 {
         
@@ -485,7 +586,29 @@ cout<<endl<<endl<<sum_cordinates[120555];
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
 
-    int k = 20;
+for (int pr = 2145 ; pr < 2165; pr++)
+{
+    cout<<endl<<pr<<" : "<<sum_cordinates[pr];
+}
+cout<<endl;
+int k = 20;
+vector<vector<int>> result_projected  (num_query_points , vector<int> (k, 0));
+
+for (int q = 0; q < num_query_points; q++)
+{
+    int nearest = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points-1);
+    exact_knn_projected(&result_projected,&reference,&sum_cordinates, query.data[q],sum_cordinates_query[q], &sum_cordinates,&sorted_indices,sum_cordinates_query[nearest], nearest, 10,80,num_ref_points);    
+}
+//test area
+vector<vector<int>>* output;
+int nearest = 118;
+//void exact_knn_projected(vector<vector<float>>* output, vector<float> * reference_projected,vector<int>* sorted_indices, int nearest_index, int K, int row, int num_ref_points)
+exact_knn_projected(output,&reference,query.data[nearest], &sum_cordinates,&sorted_indices,sum_cordinates_query[nearest], nearest, 10,80,num_ref_points);
+exit(0);
+
+
+//test area
+    
     
     vector<float> test_reference  = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
     vector<float> test_query = {2.2, 3.5, 21.6, 35.7, 90};
