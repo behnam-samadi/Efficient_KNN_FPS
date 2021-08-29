@@ -136,26 +136,6 @@ Frame read_data (string file_adress, int points_dim, int output_dims)
     return(frame);
 }
 
-vector<vector<int>> KNN (Frame reference, Frame query, int K,dist_metric metric,  int num_query=0){
-    int num_ref_points = reference.data.size();
-    int num_query_points = query.data.size();
-    if (!(num_query == 0)) num_query_points = num_query;
-    vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
-    vector<float>  distance (num_ref_points);
-    for(int i = 0; i<num_query_points;i++){
-        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
-        for (int j = 0; j<num_ref_points;j++)
-        {
-            distance[j] = calc_distance(query.data[i], reference.data[j], metric);
-        }
-        vector<int> topk = topK(distance, K);
-        for(int c = 0; c<K;c++)
-        {
-            result[i][c] = topk[c];
-        }
-    }
-return(result);
-}
 
 void print_vector (vector<int> v){
     for (int i = 0 ; i< v.size();i++)
@@ -164,6 +144,36 @@ void print_vector (vector<int> v){
     }
     cout<<endl;
 }
+
+
+vector<vector<int>> KNN (Frame reference, Frame query, int K,dist_metric metric,  int num_query=0){
+    int num_ref_points = reference.data.size();
+    int num_query_points = query.data.size();
+    if (!(num_query == 0)) num_query_points = num_query;
+    vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
+    vector<float>  distance (num_ref_points);
+    for(int i = 2708; i<2709;i++){
+        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        for (int j = 0; j<num_ref_points;j++)
+        {
+            distance[j] = calc_distance(query.data[i], reference.data[j], metric);
+        }
+        vector<int> topk = topK(distance, K);
+        cout<<"in javabe nahayi ast:"<<endl;
+        print_vector(topk);
+        exit(0);
+        for(int c = 0; c<K;c++)
+        {
+            cout<<"dis"<<endl;
+            //result[i][c] = topk[c];
+            cout<<endl<<c<<"'th answer: "<<topk[c];
+        }
+        exit(0);
+    }
+return(result);
+}
+
+
 
 
 void print_vector_bool (vector<bool> v){
@@ -378,6 +388,8 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
             end_knn++;
         }
     }
+    cout<<endl<<start_knn<<" "<<end_knn;
+    //exit(0);
     //int max_index = start_knn;
     float max_dist = calc_distance((*reference).data[(*sorted_indices)[start_knn]], query, Euclidean);
     float dist;
@@ -555,7 +567,7 @@ int main()
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    num_query_points = 64;
+    num_query_points = num_query_points;
     int round_size = num_query_points;
     
     vector<float> sum_cordinates(num_ref_points);
@@ -592,23 +604,56 @@ cout<<endl<<endl<<sum_cordinates[120555];
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
 
-for (int pr = 2145 ; pr < 2165; pr++)
+for (int pr = 80 ; pr < 120; pr++)
 {
     cout<<endl<<pr<<" : "<<sum_cordinates[pr];
 }
 cout<<endl;
-num_query_points = 24;
-int k = 10;
+//exit(0);
+//exit(0);
+//exit(0);
+num_query_points = 125;
+int k = 6;
 vector<vector<int>> result_projected  (num_query_points , vector<int> (k, 0));
-vector<vector<int>> knn_result = KNN(reference, query, k, Modified_Manhattan,num_query_points);
 
-for (int q = 0; q < num_query_points; q++)
+cout<<"injast:"<<endl;
+for (int c= 100; c<=105;c++)
 {
+    cout<<endl<<sorted_indices[c];
+}
+cout<<endl<<sorted_query[120];
+
+vector<int> sorted_indices_reverse (sorted_indices.size());
+for (int i = 0 ; i < sorted_indices.size(); i++)
+{
+    sorted_indices_reverse[sorted_indices[i]] = i;
+}
+cout<<"inha hatand:"<<endl;
+cout<<endl<<sorted_indices_reverse[4525];
+cout<<endl<<sorted_indices_reverse[6334];
+cout<<endl<<sorted_indices_reverse[2713];
+cout<<endl<<sorted_indices_reverse[884];
+cout<<endl<<sorted_indices_reverse[881];
+cout<<endl<<sorted_indices_reverse[6335];
+
+//cout<<endl<<sorted_indices_reverse[2756];
+exit(0);
+vector<vector<int>> knn_result;
+knn_result = KNN(reference, query, k, Euclidean,num_query_points);
+exit(0);
+
+for (int q = 120; q < num_query_points; q++)
+{
+    cout<<endl<< sum_cordinates_query[q]<<" sum_cordinates_query[q]";
+    //exit(0);
     int nearest = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points-1);
     cout<<endl<<nearest;
+    //exit(0);
     exact_knn_projected(&result_projected,&reference,&sum_cordinates,&sorted_indices, query.data[q],sum_cordinates_query[q],nearest, k,q,num_ref_points);    
+    exit(0);
     cout<<"and correct result:"<<endl;
-    print_vector(knn_result[0]);
+    knn_result = KNN(reference, query, k, Modified_Manhattan,num_query_points);
+    print_vector(knn_result[25]);
     exit(0);
 }
 //test area
