@@ -652,6 +652,12 @@ for (int i = 0 ; i < sorted_indices.size(); i++)
 {
     sorted_indices_reverse[sorted_indices[i]] = i;
 }
+cout<<endl<<"movaghat "<<sorted_indices[144]<<endl;
+cout<<endl<<calc_distance(reference.data[sorted_indices[144]], query.data[2708], Euclidean);
+cout<<endl<<calc_distance(reference.data[4525], query.data[2708], Euclidean);
+cout<<endl<<calc_distance(reference.data[6334], query.data[2708], Euclidean);
+cout<<endl<<calc_distance(reference.data[2713], query.data[2708], Euclidean);
+exit(0);
 cout<<"inha hatand:"<<endl;
 cout<<endl<<sorted_indices_reverse[4525];
 cout<<endl<<sorted_indices_reverse[6334];
@@ -673,7 +679,7 @@ for (int q = 120; q < num_query_points; q++)
     int nearest = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points-1);
     cout<<endl<<nearest;
     //exit(0);
-    exact_knn_projected(&result_projected,&reference,&sum_cordinates,&sorted_indices, query.data[sorted_query[q]],sum_cordinates_query[q],nearest, k,q,num_ref_points);    
+    exact_knn_projected(&result_projected,&reference,&sum_cordinates,&sorted_indices, query.data[q],sum_cordinates_query[q],nearest, k,q,num_ref_points);    
     exit(0);
     cout<<"and correct result:"<<endl;
     knn_result = KNN(reference, query, k, Modified_Manhattan,num_query_points);
