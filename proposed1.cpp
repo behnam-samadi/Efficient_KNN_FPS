@@ -14,7 +14,7 @@
 using namespace std;
 vector<int> sorted_indices_reverse (211000);
 //cleaning
-ofstream fout("output.txt");
+ofstream fout("in_and_out.txt");
 
 enum dist_metric
 {
@@ -406,7 +406,12 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
             //max_index = c;
         }
     }
-
+cout<<endl;
+     // while(knn.size())
+    //{
+    //    cout<<endl<<knn.top().first<<" "<<sorted_indices_reverse[knn.top().second];
+    //    knn.pop();
+    //}
 
     
     //exit(0);
@@ -436,10 +441,12 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
         calculated_distances_num++;
         if (dist < max_dist)
         {
-            cout<<"right_arrow: "<<right_arrow<<endl;
+            fout<<endl<<"R: ("<<knn.top().second<<","<<knn.top().first<<","<<(sorted_indices_reverse)[knn.top().second]<<") is going out and ("<<(*sorted_indices)[right_arrow]<<","<<dist<<","<<right_arrow<<") is going in"<<endl;
+           
             cout<<abs( (*reference_projected)[right_arrow] - query_projected )<<endl;
             cout<<max_dist<<endl;
-            
+
+          
             knn.pop();
             max_dist = knn.top().first;
             knn.push(make_pair(dist, (*sorted_indices)[right_arrow]));
@@ -465,8 +472,8 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
         calculated_distances_num++;
         if (dist < max_dist)
         {
-            cout<<"left_arrow: "<<left_arrow<<endl;
             
+        fout<<endl<<"L: ("<<knn.top().second<<","<<knn.top().first<<","<<(sorted_indices_reverse)[knn.top().second]<<") is going out and ("<<(*sorted_indices)[left_arrow]<<","<<dist<<","<<left_arrow<<") is going in"<<endl;
             knn.pop();
             max_dist = knn.top().first;
             knn.push(make_pair(dist, (*sorted_indices)[left_arrow]));
@@ -652,12 +659,14 @@ for (int i = 0 ; i < sorted_indices.size(); i++)
 {
     sorted_indices_reverse[sorted_indices[i]] = i;
 }
+cout<<endl<<calc_distance(reference.data[6335], query.data[2708], Euclidean);
+//exit(0);
 cout<<"inha hatand:"<<endl;
 cout<<endl<<sorted_indices_reverse[4525];
+cout<<endl<<sorted_indices_reverse[881];
 cout<<endl<<sorted_indices_reverse[6334];
 cout<<endl<<sorted_indices_reverse[2713];
 cout<<endl<<sorted_indices_reverse[884];
-cout<<endl<<sorted_indices_reverse[881];
 cout<<endl<<sorted_indices_reverse[6335];
 
 //cout<<endl<<sorted_indices_reverse[2756];
