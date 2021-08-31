@@ -1,0 +1,84 @@
+
+R: (2757,9.76235,102) is going out and (11707,3.73975,106) is going in because3.73975is smaller than 9.76235
+0.126991 9.76235
+
+
+R: (2756,9.56899,105) is going out and (20664,6.78457,107) is going in because6.78457is smaller than 9.56899
+0.127998 9.56899
+
+
+R: (20664,6.78457,107) is going out and (2721,1.40353,108) is going in because1.40353is smaller than 6.28004
+0.139 6.28004
+
+
+R: (18825,6.28004,101) is going out and (893,2.45904,111) is going in because2.45904is smaller than 6.28004
+0.294998 6.28004
+
+
+R: (15258,4.87864,104) is going out and (4529,1.84398,114) is going in because1.84398is smaller than 4.87864
+0.382004 4.87864
+
+
+R: (13485,4.2333,103) is going out and (4527,1.45973,115) is going in because1.45973is smaller than 4.2333
+0.521996 4.2333
+
+
+R: (11707,3.73975,106) is going out and (4526,1.23999,116) is going in because1.23999is smaller than 3.73975
+0.528 3.73975
+
+
+R: (893,2.45904,111) is going out and (892,2.32641,118) is going in because2.32641is smaller than 2.45904
+0.573997 2.45904
+
+
+R: (892,2.32641,118) is going out and (4528,1.78759,119) is going in because1.78759is smaller than 1.84398
+0.655998 1.84398
+
+
+R: (4529,1.84398,114) is going out and (2718,1.44177,126) is going in because1.44177is smaller than 1.84398
+1.111 1.84398
+
+
+R: (4528,1.78759,119) is going out and (884,0.998733,130) is going in because0.998733is smaller than 1.78759
+1.308 1.78759
+
+
+R: (4527,1.45973,115) is going out and (2713,0.954073,132) is going in because0.954073is smaller than 1.45973
+1.31899 1.45973
+
+
+R: (2718,1.44177,126) is going out and (2717,1.41023,133) is going in because1.41023is smaller than 1.44177
+1.326 1.44177
+
+
+R: (2717,1.41023,133) is going out and (2716,1.35137,136) is going in because1.35137is smaller than 1.40353
+1.467 1.40353
+
+
+R: (2721,1.40353,108) is going out and (885,1.32452,138) is going in because1.32452is smaller than 1.40353
+1.48701 1.40353
+
+
+R: (2716,1.35137,136) is going out and (2714,1.1303,140) is going in because1.1303is smaller than 1.35137
+1.504 1.35137
+
+
+R: (885,1.32452,138) is going out and (2715,1.25301,142) is going in because1.25301is smaller than 1.32452
+1.52499 1.32452
+
+
+R: (2715,1.25301,142) is going out and (881,1.02072,144) is going in because1.02072is smaller than 1.23999
+1.73499 1.23999
+
+
+R: (4526,1.23999,116) is going out and (883,1.18111,145) is going in because1.18111is smaller than 1.23999
+1.73599 1.23999
+
+
+L: (883,1.18111,145) is going out and (6334,0.949542,88) is going in because0.949542is smaller than 1.1303
+1.29101 1.1303
+
+
+L: (2714,1.1303,140) is going out and (6335,1.03168,83) is going in because1.03168is smaller than 1.1303
+1.58601 1.1303
+

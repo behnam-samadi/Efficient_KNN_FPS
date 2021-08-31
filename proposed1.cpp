@@ -168,6 +168,7 @@ vector<vector<int>> KNN (Frame reference, Frame query, int K,dist_metric metric,
             //result[i][c] = topk[c];
             cout<<endl<<c<<"'th answer: "<<topk[c];
         }
+
         
     }
 return(result);
@@ -406,15 +407,7 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
             //max_index = c;
         }
     }
-cout<<endl;
-     // while(knn.size())
-    //{
-    //    cout<<endl<<knn.top().first<<" "<<sorted_indices_reverse[knn.top().second];
-    //    knn.pop();
-    //}
 
-    
-    //exit(0);
     int right_arrow = end_knn+1;
     int left_arrow = start_knn-1;
 
@@ -434,14 +427,28 @@ cout<<endl;
 //        knn.pop();
 //    }
 //    exit(0);
+        //right_arrow = 141;
+        //cout<<"do joor:"<<endl;
+        //dist = calc_distance((*reference).data[(*sorted_indices)[right_arrow]], query, Euclidean);
+        //vector<float> test1 = (*reference).data[(*sorted_indices)[right_arrow]];
+        //print_vector_float(test1);
+        //print_vector_float(query);
+        //exit(0);
+        //cout<<"in 3 ta"<<endl;
+        //cout<<endl<<abs((((*reference).data[(*sorted_indices)[right_arrow]][0] + (*reference).data[(*sorted_indices)[right_arrow]][1] + (*reference).data[(*sorted_indices)[right_arrow]][2])) - (query[0] + query[1] + query[2]));
+        //cout<<endl<<abs((*reference_projected)[right_arrow] - query_projected);
+        //dist = calc_distance((*reference).data[(*sorted_indices)[right_arrow]], query, Euclidean);
+        //cout<<endl<<dist;
         
-    while( abs( (*reference_projected)[right_arrow] - query_projected ) <= max_dist    )
+    while( abs( (*reference_projected)[right_arrow] - query_projected ) <= (sqrt(2)*max_dist)    )
     {
         dist = calc_distance((*reference).data[(*sorted_indices)[right_arrow]], query, Euclidean);
         calculated_distances_num++;
         if (dist < max_dist)
         {
-            fout<<endl<<"R: ("<<knn.top().second<<","<<knn.top().first<<","<<(sorted_indices_reverse)[knn.top().second]<<") is going out and ("<<(*sorted_indices)[right_arrow]<<","<<dist<<","<<right_arrow<<") is going in"<<endl;
+            fout<<endl<<"R: ("<<knn.top().second<<","<<knn.top().first<<","<<(sorted_indices_reverse)[knn.top().second]<<") is going out and ("<<(*sorted_indices)[right_arrow]<<","<<dist<<","<<right_arrow<<") is going in because"<<dist<<"is smaller than "<<max_dist<<endl;
+            fout<<((*reference_projected)[right_arrow] - query_projected)<<" "<<max_dist <<endl;
+            fout<<endl;
            
             cout<<abs( (*reference_projected)[right_arrow] - query_projected )<<endl;
             cout<<max_dist<<endl;
@@ -466,14 +473,16 @@ cout<<endl;
         if (right_arrow == num_ref_points-1)
             break;
     }
-        while(abs((*reference_projected)[left_arrow] - query_projected) <= max_dist)
+        while(abs((*reference_projected)[left_arrow] - query_projected) <= (sqrt(2)*max_dist))
     {
         dist = calc_distance((*reference).data[(*sorted_indices)[left_arrow]], query, Euclidean);
         calculated_distances_num++;
         if (dist < max_dist)
         {
             
-        fout<<endl<<"L: ("<<knn.top().second<<","<<knn.top().first<<","<<(sorted_indices_reverse)[knn.top().second]<<") is going out and ("<<(*sorted_indices)[left_arrow]<<","<<dist<<","<<left_arrow<<") is going in"<<endl;
+        fout<<endl<<"L: ("<<knn.top().second<<","<<knn.top().first<<","<<(sorted_indices_reverse)[knn.top().second]<<") is going out and ("<<(*sorted_indices)[left_arrow]<<","<<dist<<","<<left_arrow<<") is going in because"<<dist<<"is smaller than "<<max_dist<<endl;
+            fout<< abs((*reference_projected)[left_arrow] - query_projected)<<" "<<max_dist <<endl;
+            fout<<endl;
             knn.pop();
             max_dist = knn.top().first;
             knn.push(make_pair(dist, (*sorted_indices)[left_arrow]));
@@ -488,6 +497,15 @@ cout<<endl;
 //    {
 
   //  }
+    cout<<endl;
+      while(knn.size())
+    {
+        cout<<endl<<knn.top().first<<" "<<sorted_indices_reverse[knn.top().second];
+        knn.pop();
+    }
+
+    
+    exit(0);
 cout<<endl<<"result:"<<endl;
     while(knn.size())
     {
