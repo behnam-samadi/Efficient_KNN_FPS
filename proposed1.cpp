@@ -653,14 +653,6 @@ cout<<endl<<endl<<sum_cordinates[120555];
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
 
-for (int pr = 80 ; pr < 120; pr++)
-{
-    cout<<endl<<pr<<" : "<<sum_cordinates[pr];
-}
-cout<<endl;
-//exit(0);
-//exit(0);
-//exit(0);
 num_query_points = 125;
 int k = 6;
 vector<vector<int>> result_projected  (num_query_points , vector<int> (k, 0));
