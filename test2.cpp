@@ -14,6 +14,7 @@
 using namespace std;
 
 //cleaning
+vector<int> sorted_indices_reverse (220000);
 ofstream fout("in_and_out.txt");
 
 enum dist_metric
@@ -166,7 +167,11 @@ vector<int> KNN (Frame reference, Frame query, int K,dist_metric metric, int ind
             result[c] = topk[c];
             
         }
+        cout<<"az tooye knn:"<<endl;
+print_vector(result);
+exit(0);
 return(result);
+
 }
 
 
@@ -384,7 +389,8 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
             end_knn++;
         }
     }
-    //cout<<endl<<start_knn<<" "<<end_knn;
+    cout<<"start_knn and end_knn"<<endl;
+    cout<<endl<<start_knn<<" "<<end_knn;
     //exit(0);
     //int max_index = start_knn;
     float max_dist = calc_distance((*reference).data[(*sorted_indices)[start_knn]], query, Euclidean);
@@ -396,6 +402,7 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
         dist = calc_distance((*reference).data[(*sorted_indices)[c]], query, Euclidean);
         calculated_distances_num ++;
         knn.push(make_pair(dist, (*sorted_indices)[c]));
+        //knn.push(make_pair(dist, c));
         if (dist > max_dist)
         {
             max_dist = dist;
@@ -405,21 +412,49 @@ void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<flo
     int right_arrow = end_knn+1;
     int left_arrow = start_knn-1;
     max_dist = knn.top().first;
+    fout<<endl<<"the first search finds values: "<<start_knn<<" and "<<end_knn<<endl;
+    cout<<"checke vasate kar"<<endl;
+    //while(knn.size())
+    //{
+        //(*output)[row][c++] = knn.top().second;
+    //    cout<<endl<<"first: "<< knn.top().first<<" second: "<< sorted_indices_reverse[knn.top().second];
+        //cout<<"change to result "<<row<<" "<<c<<" "<<knn.top().second<<endl;
+    //    knn.pop();
+    //}
+    //exit(0);   
+    //right_arrow = 120613;
+    //cout<<calc_distance((*reference).data[(*sorted_indices)[right_arrow]], query, Euclidean)<<endl;
+    //right_arrow = 120620;
+    //cout<<calc_distance((*reference).data[(*sorted_indices)[right_arrow]], query, Euclidean)<<endl;
+    //exit(0);
+
     if (right_arrow<num_ref_points)
         {
     while( abs( (*reference_projected)[right_arrow] - query_projected ) <= (sqrt(3)*max_dist)    )
     {
+        fout<<"F: the point in the "<<right_arrow<<"'th position is processed because "<<abs( (*reference_projected)[right_arrow] - query_projected )<<" <= "<<max_dist<<endl;
         dist = calc_distance((*reference).data[(*sorted_indices)[right_arrow]], query, Euclidean);
         calculated_distances_num++;
         if (dist < max_dist)
         {
-            fout<<((*reference_projected)[right_arrow] - query_projected)<<" "<<max_dist <<endl;
-            fout<<endl;
+            fout<<"Bingo! "<<dist<<" < "<<max_dist<<endl;
+            
+            //fout<<((*reference_projected)[right_arrow] - query_projected)<<" "<<max_dist <<endl;
+            //fout<<endl;
             //cout<<abs( (*reference_projected)[right_arrow] - query_projected )<<endl;
             //cout<<max_dist<<endl;
+            int temp = knn.top().second;
             knn.pop();
+            
             knn.push(make_pair(dist, (*sorted_indices)[right_arrow]));
             max_dist = knn.top().first;
+            
+            fout<<"The point is position "<<sorted_indices_reverse[temp]<<"is going out and "<<right_arrow<<" is going in"<<endl;
+            //knn.push(make_pair(dist, right_arrow));
+        }
+        else
+        {
+            fout<<"F: not Bingo! because "<<dist<<">"<<max_dist<<endl;
         }
         right_arrow++;
         if (right_arrow == num_ref_points)
@@ -430,27 +465,40 @@ if (left_arrow>0)
 {
         while(abs((*reference_projected)[left_arrow] - query_projected) <= (sqrt(3)*max_dist))
     {
+        fout<<"B: the point in the "<<left_arrow<<"'th position is processed because "<<abs( (*reference_projected)[left_arrow] - query_projected )<<" <= "<<max_dist<<endl;
         dist = calc_distance((*reference).data[(*sorted_indices)[left_arrow]], query, Euclidean);
         calculated_distances_num++;
         if (dist < max_dist)
         {
-            fout<< abs((*reference_projected)[left_arrow] - query_projected)<<" "<<max_dist <<endl;
-            fout<<endl;
+            fout<<"B: Bingo! "<<dist<<" < "<<max_dist<<endl;
+            int temp = knn.top().second;
             knn.pop();
+            
             knn.push(make_pair(dist, (*sorted_indices)[left_arrow]));
             max_dist = knn.top().first;
+            
+            fout<<"B: The point is position "<<sorted_indices_reverse[temp]<<"is going out and "<<left_arrow<<" is going in"<<endl;
+            //knn.push(make_pair(dist, left_arrow));
+        }
+        else
+        {
+            fout<<"F: not Bingo! because "<<dist<<">"<<max_dist<<endl;
         }
         left_arrow--;
         if (left_arrow<0) break;
     }
 }
 int c = 0;
+cout<<"exact result"<<endl;
     while(knn.size())
     {
         (*output)[row][c++] = knn.top().second;
+        cout<<endl<<knn.top().second;
         //cout<<"change to result "<<row<<" "<<c<<" "<<knn.top().second<<endl;
         knn.pop();
     }
+    cout<<endl;
+    //exit(0);
     //cout<<endl<<"number of calculated_distances_num: "<<calculated_distances_num<<endl;    
 }
 
@@ -553,7 +601,7 @@ int main()
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    num_query_points = 512;
+    num_query_points = 64;
     int round_size = num_query_points;
     
     vector<float> sum_cordinates(num_ref_points);
@@ -577,7 +625,7 @@ int main()
     
 
     vector<int> sorted_indices(num_ref_points);
-    vector<int> sorted_indices_reverse (num_ref_points);
+    
     iota(sorted_indices.begin(),sorted_indices.end(),0); //Initializing
     sort( sorted_indices.begin(),sorted_indices.end(), [&](int i,int j){return sum_cordinates[i]<sum_cordinates[j];} );
     sort( sum_cordinates.begin(),sum_cordinates.end());
@@ -589,14 +637,31 @@ int main()
     sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
-int k = 6;
-
 for (int i = 0 ; i < sorted_indices.size(); i++)
 {
     sorted_indices_reverse[sorted_indices[i]] = i;
 }
+
+
+int k = 6;
+cout<<"index haye dar tartib:"<<endl;
+cout<<endl<<sorted_indices_reverse[41];
+cout<<endl<<sorted_indices_reverse[1854];
+cout<<endl<<sorted_indices_reverse[42];
+cout<<endl<<sorted_indices_reverse[40];
+cout<<endl<<sorted_indices_reverse[1853];
+cout<<endl<<sorted_indices_reverse[1855];
+ 
+//exit(0);
+
+ 
+
+
+
     vector<vector<int>> result_projected  (num_query_points , vector<int> (k, 0));
 vector<int> knn_result;
+cout<<num_ref_points;
+//exit(0);
 for (int q = 16; q < num_query_points; q++)
 {
     int score = 0;
