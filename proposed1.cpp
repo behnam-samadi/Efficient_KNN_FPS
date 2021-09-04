@@ -589,7 +589,7 @@ int main()
     sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return sum_cordinates_query[i]<sum_cordinates_query[j];} );
     sort( sum_cordinates_query.begin(),sum_cordinates_query.end());
 
-int k = 6;
+int k = 60;
 
 for (int i = 0 ; i < sorted_indices.size(); i++)
 {
