@@ -358,7 +358,7 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
 
 //exact_knn_projected(output, &reference_projected,&reference_order,20, 80,1564,  int num_ref_point)
 //exact_knn_projected(&exact_fast_result,&reference,&reference_projected,   &reference_order, query.data[q],query_projected[q],nearest, k,num_ref_points);
-void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query, float query_projected, int nearest_index, int K, int row, int start reference , int end_reference)
+void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query, float query_projected, int nearest_index, int K, int row, int start_reference , int end_reference)
 {
     int start_knn = nearest_index;
     int end_knn = nearest_index;
@@ -454,7 +454,7 @@ int c = 0;
     //cout<<endl<<"number of calculated_distances_num: "<<calculated_distances_num<<endl;    
 }
 
-spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
+spliting_state one_step_parallel_binary_search(vector<float> *reference_projected, vector<float>* query_projected,int start_reference, int end_reference, int start_query, int end_query, vector<vector<int>>* result, Frame* reference, vector<int>* reference_order, Frame* query, vector<int>* query_order, int k)
 {
         
     int middle_index = (start_reference + end_reference)/2;
@@ -462,7 +462,13 @@ spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<
     spliting_result split = binary_search_split(query, start_query, end_query, middle_value);
     int divider1 = split.divider1;
     int divider2 = split.divider2;
-    result->set_value(middle_index, divider1, divider2);
+    //result->set_value(middle_index, divider1, divider2);
+    for(int d = divider1; d<= divider2;d++)
+    {
+        void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query          , float query_projected    , int nearest_index, int K, int row, int start reference , int end_reference)
+        exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[d]],(*query_projected)[d],middle_index, k,d,start_reference, end_reference);    
+    }
+
     
     spliting_state state;
     state.left_size = max(divider1 - start_query, 0);
@@ -483,7 +489,9 @@ void* parallel_binary_search(void * data_void)
     Frame * query = data->query;
     vector<float> * query_projected = data->query_projected;
     vector<int>* reference_order = reference_order;
-    vector<int> ;
+    vector<int> * query_order;
+    //vector<int> ;
+    int k = args->k;
     int start_reference = data->start_reference;
     int end_reference = data->end_reference;
     int start_query = data->start_query;
@@ -500,17 +508,17 @@ void* parallel_binary_search(void * data_void)
     {
         for (int q = start_query ; q<= end_query;q++)
         {
-            int single_result = binary_search(reference, (*query_projected)[q], start_reference, end_reference);
-            exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[sorted_query[q]],query_projected[q],nearest, k,q,num_ref_points);    
-            void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query          , float query_projected    , int nearest_index, int K, int row, int start reference , int end_reference)
-            result->set_value(single_result, q, q+1);
+            int nearest = binary_search(reference, (*query_projected)[q], start_reference, end_reference);
+            exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,start_reference, end_reference);    
+            //void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query          , float query_projected    , int nearest_index, int K, int row, int start reference , int end_reference)
+            //result->set_value(single_result, q, q+1);
             
         }
         delete data;
         
         return NULL;
     }
-    state = one_step_parallel_binary_search(reference , query_projected , start_reference, end_reference , start_query, end_query, result);
+    state = one_step_parallel_binary_search(reference_projected , query_projected , start_reference, end_reference , start_query, end_query, result, reference, reference_order, query, query_order, k);
     middle_index = state.middle_index;
         if(state.right_size > 0)
         {
@@ -544,8 +552,12 @@ void* parallel_binary_search(void * data_void)
     } while(state.left_size>1);
     if (state.left_size == 1)
         {
-            int single_result = binary_search(reference, (*query_projected)[start_query], start_reference, end_reference);
-            result->set_value(single_result, start_query, start_query+1);
+
+            int nearest = binary_search(reference, (*query_projected)[q], start_reference, end_reference);
+            exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,start_reference, end_reference);    
+            //int single_result = binary_search(reference, (*query_projected)[start_query], start_reference, end_reference);
+
+            //result->set_value(single_result, start_query, start_query+1);
             
         }
         delete data;
@@ -590,9 +602,9 @@ int main()
     sort( reference_projected.begin(),reference_projected.end());
 
 
-    vector<int> sorted_query(round_size);
-    iota(sorted_query.begin(),sorted_query.end(),0); //Initializing
-    sort( sorted_query.begin(),sorted_query.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
+    vector<int> query_order(round_size);
+    iota(query_order.begin(),query_order.end(),0); //Initializing
+    sort( query_order.begin(),query_order.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
     sort( query_projected.begin(),query_projected.end());
 
     int k = 40;
@@ -612,7 +624,7 @@ int main()
     args->reference = &reference;
     args->query = &query;
     args->reference_projected = &reference_projected;
-
+    args->k = k;
     //args->reference = &test_reference;
     args->query = &query_projected;
     //args->query = &test_query;
@@ -631,7 +643,7 @@ int main()
     pthread_mutex_init(args->push_mutex,0);
     pthread_create( main_thread, NULL, parallel_binary_search, (void*)args);
     cout<<endl<<endl<<endl<<"start running parallel code"<<endl;
-    //exact_knn_projected(result,reference,reference_projected,&reference_order,query.data[sorted_query[q]],query_projected[q],nearest, k,q,num_ref_points);    
+    //exact_knn_projected(result,reference,reference_projected,&reference_order,query.data[query_order[q]],query_projected[q],nearest, k,q,num_ref_points);    
     //args.threads->push_back(new pthread_t);
     //spliting_state one_step_parallel_binary_search(vector<float> *reference, vector<float>* query,int start_reference, int end_reference, int start_query, int end_query, parallel_search_result* result)
     //spliting_state temp_state =  one_step_parallel_binary_search(&reference_projected, &query_projected, 60507 , num_ref_points, 0,round_size, &round_result);
@@ -674,8 +686,8 @@ for (int q = 0; q < num_query_points; q++)
 {
     int score = 0;
     int nearest = binary_search(&reference_projected, query_projected[q], 0, num_ref_points-1);
-    exact_knn_projected(&exact_fast_result,&reference,&reference_projected,&reference_order,query.data[sorted_query[q]],query_projected[q],nearest, k,q,num_ref_points);    
-    knn_result = KNN(reference, query, k, Euclidean,sorted_query[q]);
+    exact_knn_projected(&exact_fast_result,&reference,&reference_projected,&reference_order,query.data[query_order[q]],query_projected[q],nearest, k,q,num_ref_points);    
+    knn_result = KNN(reference, query, k, Euclidean,query_order[q]);
     //exit();
     //iota(exact_fast_result[q].begin(),exact_fast_result[q].end(),0); //Initializing
     sort(exact_fast_result[q].begin(),exact_fast_result[q].end());
@@ -800,7 +812,7 @@ return(0);
     //return(0);
 
 
-    cout<<"ine:"<<sorted_query[0];
+    cout<<"ine:"<<query_order[0];
     cout<<"va in"<<reference_order[59];
 
 
