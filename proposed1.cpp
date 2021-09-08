@@ -146,16 +146,37 @@ void print_vector (vector<int> v){
 }
 
 
-vector<int> KNN (Frame reference, Frame query, int K,dist_metric metric, int index){
+vector<vector<int>> KNN (Frame reference, Frame query, int K,dist_metric metric,  int num_query=0){
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
+    if (!(num_query == 0)) num_query_points = num_query;
+    vector<vector<int>> result  (num_query_points , vector<int> (K, 0));
+    vector<float>  distance (num_ref_points);
+    for(int i = 0; i<num_query_points;i++){
+        cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        for (int j = 0; j<num_ref_points;j++)
+        {
+            distance[j] = calc_distance(query.data[i], reference.data[j], metric);
+        }
+        vector<int> topk = topK(distance, K);
+        for(int c = 0; c<K;c++)
+        {
+            result[i][c] = topk[c];
+        }
+    }
+return(result);
+}
+
+vector<int> KNN_one_row (Frame * reference, Frame * query, int K,dist_metric metric, int index){
+    int num_ref_points = (*reference).data.size();
+    int num_query_points = (*query).data.size();
     vector<int> result(K);
     vector<float>  distance (num_ref_points);
     int i = index;
         //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
-            distance[j] = calc_distance(query.data[i], reference.data[j], metric);
+            distance[j] = calc_distance((*query).data[i], (*reference).data[j], metric);
         }
         vector<int> topk = topK(distance, K);
         //cout<<"in javabe nahayi ast:"<<endl;
@@ -202,15 +223,20 @@ void print_vector_2D (vector<vector<int>>input){
 }
 struct thread_data
 {
- vector<float> *reference;
- vector<float>* query;
- int start_reference;
- int end_reference;
- int start_query;
- int end_query;
- parallel_search_result* result;
- vector<pthread_t*>* threads;
- pthread_mutex_t *push_mutex;
+    Frame * reference;
+    Frame * query;
+    vector<int>* reference_order;
+    vector<int> * query_order;
+    int k;
+    vector<vector<int>>* result;
+     vector<float> *reference_projected;
+     vector<float>* query_projected;
+     int start_reference;
+     int end_reference;
+     int start_query;
+     int end_query;
+     vector<pthread_t*>* threads;
+     pthread_mutex_t *push_mutex;
 };
 
 int binary_search (vector<float>* reference, float query, int begin, int end)
@@ -352,6 +378,7 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
         result.divider1 = divide_point1;
         result.divider2 = divide_point2;
     }
+
     return result;
 }
 
@@ -360,6 +387,7 @@ spliting_result binary_search_split(vector<float> *input, int start_index, int e
 //exact_knn_projected(&exact_fast_result,&reference,&reference_projected,   &reference_order, query.data[q],query_projected[q],nearest, k,num_ref_points);
 void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query, float query_projected, int nearest_index, int K, int row, int start_reference , int end_reference)
 {
+    cout<<endl<<row<<"'th row ";
     int start_knn = nearest_index;
     int end_knn = nearest_index;
     //float middle_value = (*reference_projected)[nearest_index];
@@ -448,6 +476,7 @@ int c = 0;
     while(knn.size())
     {
         (*output)[row][c++] = knn.top().second;
+        cout<<"element "<<row<<" , "<<c<<"changed to "<< knn.top().second<<endl;
         //cout<<"change to result "<<row<<" "<<c<<" "<<knn.top().second<<endl;
         knn.pop();
     }
@@ -456,16 +485,19 @@ int c = 0;
 
 spliting_state one_step_parallel_binary_search(vector<float> *reference_projected, vector<float>* query_projected,int start_reference, int end_reference, int start_query, int end_query, vector<vector<int>>* result, Frame* reference, vector<int>* reference_order, Frame* query, vector<int>* query_order, int k)
 {
-        
+    
     int middle_index = (start_reference + end_reference)/2;
-    float middle_value = (*reference)[middle_index];
-    spliting_result split = binary_search_split(query, start_query, end_query, middle_value);
+    float middle_value = (*reference_projected)[middle_index];
+    spliting_result split = binary_search_split(query_projected, start_query, end_query, middle_value);
     int divider1 = split.divider1;
     int divider2 = split.divider2;
     //result->set_value(middle_index, divider1, divider2);
-    for(int d = divider1; d<= divider2;d++)
+    for(int d = divider1; d< divider2;d++)
     {
-        void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query          , float query_projected    , int nearest_index, int K, int row, int start reference , int end_reference)
+
+        //void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query          , float query_projected    , int nearest_index, int K, int row, int start reference , int end_reference)
+        //cout<<endl<<start_query<<"'call1"<<endl;
+         
         exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[d]],(*query_projected)[d],middle_index, k,d,start_reference, end_reference);    
     }
 
@@ -488,10 +520,10 @@ void* parallel_binary_search(void * data_void)
     Frame * reference = data->reference;
     Frame * query = data->query;
     vector<float> * query_projected = data->query_projected;
-    vector<int>* reference_order = reference_order;
-    vector<int> * query_order;
+    vector<int>* reference_order = data->reference_order;
+    vector<int> * query_order = data->query_order;
     //vector<int> ;
-    int k = args->k;
+    int k = data->k;
     int start_reference = data->start_reference;
     int end_reference = data->end_reference;
     int start_query = data->start_query;
@@ -501,35 +533,40 @@ void* parallel_binary_search(void * data_void)
     vector<pthread_t*>* threads = data->threads;
     int middle_index;
     spliting_state state;
-    int task_size;
     do{   
         //cout<<start_reference<<" "<<end_reference<<" "<<start_query<<" "<<end_query<<endl;
     if ((end_reference - start_reference)<2)
     {
         for (int q = start_query ; q<= end_query;q++)
         {
-            int nearest = binary_search(reference, (*query_projected)[q], start_reference, end_reference);
-            exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,start_reference, end_reference);    
+            int nearest = binary_search(reference_projected, (*query_projected)[q], start_reference, end_reference);
+            
+            //exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,start_reference, end_reference);    
             //void exact_knn_projected(vector<vector<int>>* output,Frame* reference,vector<float> * reference_projected, vector<int>* reference_order,vector<float>query          , float query_projected    , int nearest_index, int K, int row, int start reference , int end_reference)
             //result->set_value(single_result, q, q+1);
             
         }
         delete data;
-        
         return NULL;
     }
     state = one_step_parallel_binary_search(reference_projected , query_projected , start_reference, end_reference , start_query, end_query, result, reference, reference_order, query, query_order, k);
+
     middle_index = state.middle_index;
         if(state.right_size > 0)
         {
+
             pthread_t* temp = new pthread_t;           
             pthread_mutex_lock(push_mutex);
             threads->push_back(temp);
             pthread_mutex_unlock(push_mutex);
             thread_data* args = new thread_data;
             args->reference = reference;
+            args->reference_projected = reference_projected;
             args->query_projected = query_projected;
             args->query = query;
+            args->query_order = query_order;
+            args->reference_order = reference_order;
+            args->k = k;
             args->start_reference = middle_index;
             args->end_reference = end_reference;
             args->start_query = state.divider2;
@@ -553,8 +590,11 @@ void* parallel_binary_search(void * data_void)
     if (state.left_size == 1)
         {
 
-            int nearest = binary_search(reference, (*query_projected)[q], start_reference, end_reference);
-            exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,start_reference, end_reference);    
+            int nearest = binary_search(reference_projected, (*query_projected)[start_query], start_reference, end_reference);
+            // temp pak
+            //exact_knn_projected     (result                     ,reference         ,reference_projected                ,reference_order              ,query->data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,start_reference, end_reference);    
+
+            //cout<<endl<<start_query<<"'th call"<<endl;
             //int single_result = binary_search(reference, (*query_projected)[start_query], start_reference, end_reference);
 
             //result->set_value(single_result, start_query, start_query+1);
@@ -572,7 +612,7 @@ int main()
     Frame query = read_data("0000000001.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    num_query_points = 4096;
+    num_query_points = 32;
     int round_size = num_query_points;
     
     vector<float> reference_projected(num_ref_points);
@@ -615,18 +655,35 @@ int main()
     }
 
     vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
-    //vector<int> knn_result;
+    //vector<vector<int>> knn_result;
+    vector<int> row_result;
+    for (int q =0 ; q<num_query_points;q++)
+    {
+        //row_result = KNN_one_row (Frame reference, Frame query, int K,dist_metric metric, int index){
+        row_result = KNN_one_row(&reference , &query, k , Euclidean, query_order[q]);
+        cout<<endl<<q<<"'th result:"<<endl;
+        print_vector(row_result);
+    }
+    //knn_result = KNN(reference, query, k, Modified_Manhattan,num_query_points);
+//(Frame reference, Frame query, int K,string metric,  int num_query=0)
+    //cout<<endl<<endl<<"javabe bargashte shode:"<<endl;
+    //print_vector_2D(knn_result);
+    cout<<"in bood"<<endl;
+    //exit(0);
+
+    
     double runTime = -omp_get_wtime();
 
     thread_data* args = new thread_data;
-    parallel_search_result round_result (round_size);
+    //parallel_search_result round_result (round_size);
     vector<pthread_t*> round_threads;
     args->reference = &reference;
     args->query = &query;
     args->reference_projected = &reference_projected;
     args->k = k;
+    args->query_order = &query_order;
     //args->reference = &test_reference;
-    args->query = &query_projected;
+    args->query_projected = &query_projected;
     //args->query = &test_query;
     //args->start_reference = 0;
     args->end_reference = reference.data.size()-1;
@@ -635,7 +692,7 @@ int main()
     args->end_query = round_size-1;
     args->result = &exact_fast_result;
     args->threads = &round_threads;
-    args->reference_order = reference_order;
+    args->reference_order = &reference_order;
     args->push_mutex = new pthread_mutex_t;
 
     pthread_t * main_thread = new pthread_t;
@@ -658,7 +715,7 @@ int main()
     
     //parallel_binary_search((void*)(args));
 
-    while(!(round_result.all_set()));
+    //while(!(round_result.all_set()));
         //{cout<<endl<<"waiting";}
     for(int t = 0; t<round_threads.size();t++)
     {
@@ -668,7 +725,7 @@ int main()
     for (int tn = 0; tn < round_threads.size();tn++)
     {
 
-        delete round_threads[tn];
+    //    delete round_threads[tn];
         //cout<<endl<<"for thread "<<tn<<endl;
     }
     //delete args->push_mutex;
