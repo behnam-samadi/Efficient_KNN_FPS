@@ -13,9 +13,7 @@
 #include <time.h>
 using namespace std;
 
-//cleaning
-ofstream fout("in_and_out.txt");
-
+ofstream fout("in_and_out_2.txt");
 enum dist_metric
 {
     Modified_Manhattan,
@@ -666,7 +664,7 @@ spliting_state one_step_parallel_binary_search(vector<float> *reference_projecte
     spliting_result split = binary_search_split(query_projected, start_query, end_query, middle_value);
     int divider1 = split.divider1;
     int divider2 = split.divider2;
-    round_result.set_value(middle_index, divider1, divider2);
+    //round_result.set_value(middle_index, divider1, divider2);
     for(int d = divider1; d< divider2;d++)
     {        
      exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[d]],(*query_projected)[d],middle_index, k,d,num_ref_points);    
@@ -718,7 +716,7 @@ void* parallel_binary_search(void * data_void)
         for (int q = start_query ; q<= end_query;q++)
         {
             int nearest = binary_search(reference_projected, (*query_projected)[q], start_reference, end_reference);
-            round_result.set_value(nearest, q, q+1);
+            //round_result.set_value(nearest, q, q+1);
          exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,num_ref_points);       
          (*set_stat)[q] = true;
         }
@@ -768,7 +766,7 @@ void* parallel_binary_search(void * data_void)
         {
             int nearest = binary_search(reference_projected, (*query_projected)[start_query], start_reference, end_reference);
             exact_knn_projected     (result                     ,reference         ,reference_projected                ,reference_order              ,query->data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,num_ref_points);    
-            round_result.set_value(nearest, start_query, start_query+1);
+            //round_result.set_value(nearest, start_query, start_query+1);
             //cout<<"seg fault at (maybe) "<<start_query;
             (*set_stat)[start_query] = true;
         }
@@ -920,7 +918,7 @@ vector<vector<int>> temp  (1 , vector<int> (k, 0));
     //while(!(round_result.all_set()));
         //{cout<<endl<<"waiting";}
     bool round_working = true;
-    while(!(round_result.all_set()));
+/*    while(!(round_result.all_set()));
     while(round_working)
     {
         bool finish = true;
@@ -933,7 +931,7 @@ vector<vector<int>> temp  (1 , vector<int> (k, 0));
             }
         }
         round_working = !finish;
-    }
+    }*/
     for(int t = 0; t<round_threads.size();t++)
     {
         pthread_join(*(round_threads[t]),NULL);
