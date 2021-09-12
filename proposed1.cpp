@@ -619,13 +619,12 @@ int main()
     round_threads.push_back(main_thread);
     pthread_mutex_init(args->push_mutex,0);
     pthread_create( main_thread, NULL, parallel_binary_search, (void*)args);
-    
     bool round_working = true;
     for(int t = 0; t<round_threads.size();t++)
     {
         pthread_join(*(round_threads[t]),NULL);
     }
-
+    int num_threads = round_threads.size();
     for (int tn = 0; tn < round_threads.size();tn++)
     {
 
@@ -662,4 +661,5 @@ cout<<"Number of Query Points:         "<<num_query_points<<endl;
 cout<<"Number of Nearest Neighbors (K):"<<k<<endl;
 cout<<"Number of Correct Answers:      "<<score<<endl;
 cout<<"Execution Time:                 "<<runTime<<endl;
+cout<<"Number of Threads Created:      "<<num_threads<<endl;
 }
