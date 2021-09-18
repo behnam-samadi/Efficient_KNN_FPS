@@ -69,6 +69,14 @@ void print_vector_float (vector<float> v){
     cout<<endl;
 }
 
+void print_vector_int (vector<int> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
 struct node
 {
 	int dimension;
@@ -88,15 +96,22 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
         tree[index].branchpoint = (*all_points)[sub_points_indices[0]][dimension];
         tree[index].point = (*all_points)[sub_points_indices[0]];
     }
+
+cout<<endl<<"sorted:"<<endl;
     sort(sub_points_indices.begin(),sub_points_indices.end(), [&](int i,int j){return (*all_points)[i][dimension]<(*all_points)[j][dimension];} );
     //print_vector(sub_points_indices);
     //for (int i = 0 ; <)
     
     int middle_index = sub_points_indices.size()/2;
-    int middle_point = sub_points_indices[middle_index];
+    int middle_point = sub_points_indices[4];
     tree[index].dimension = dimension;
     tree[index].branchpoint = (*all_points)[sub_points_indices[middle_index]][dimension];
     tree[index].point = (*all_points)[middle_point];
+    cout<<"az inja:"<<endl;
+    cout<<endl<<tree[index].dimension<<endl;
+    cout<<endl<<tree[index].branchpoint<<endl;
+    print_vector_float(tree[index].point);
+    
     node_boundries left_boundries = boundries;
     left_boundries.limits[dimension][1] = (*all_points)[middle_index][dimension];
     left_boundries.is_set[dimension] = true;
@@ -105,7 +120,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
     right_boundries.is_set[dimension] = true;
     vector<int> left_points;
     vector<int> right_points;
-    for(int i =0 ; i <=middle_index; i++)
+    for(int i =0 ; i <middle_index; i++)
     {
         left_points.push_back(sub_points_indices[i]);
     }
@@ -113,6 +128,19 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
     {
         right_points.push_back(sub_points_indices[i]);
     }
+    cout<<endl<<"chapo rast:"<<endl;
+    cout<<"chap"<<endl;
+    for(int i = 0 ; i<left_points.size();i++)
+    {
+        print_vector_float((*all_points)[left_points[i]]);
+        cout<<endl;
+    }
+    cout<<endl<<"rast:"<<endl;
+    for(int i = 0 ; i<right_points.size();i++)
+    {
+        print_vector_float((*all_points)[right_points[i]]);
+    }
+    exit(0);
     create_kd_tree_rec(tree, 2*index, (dimension+1)%Points_Dim ,all_points , left_points , left_boundries);
     create_kd_tree_rec(tree, 2*index+1,(dimension+1)%Points_Dim,all_points,  right_points, right_boundries);
 
@@ -151,8 +179,6 @@ node * Create_KD_Tree(vector<vector<float>>* all_points)
     {
         boundries.is_set[i] = false;
     }
-    
-
     create_kd_tree_rec(tree, 0, 0, all_points, sub_points_indices, boundries);
     
 
@@ -173,7 +199,9 @@ int main()
     int num_query_points_orig = num_query_points;
     int num_points = 12	;
     cout<<pow(2,ceil(log2(num_points)));
-    node * tree = Create_KD_Tree(&(reference.data));
+    vector<vector<float>> test_points = {{2,3,7}, {4,-1,5}, {7,-1,0}, {0,0,0}, {1,2,6}, {0,5,-5}, {-2,7,9}, {5,0,0,}};
+    node * tree = Create_KD_Tree(&(test_points));
+    //node * tree = Create_KD_Tree(&(reference.data));
 
 	return 0;
 }
