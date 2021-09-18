@@ -554,6 +554,7 @@ void* parallel_binary_search(void * data_void)
         delete data;
         
 }
+
 int main()
 {   
     int frame_channels = 3;
