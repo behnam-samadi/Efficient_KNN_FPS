@@ -190,6 +190,21 @@ tree[index].is_set = 1;
     return tree;
 }
 
+vector<int> KNN_Exact(vector<float> query)
+{
+    downward_search(this->tree, point)
+}
+
+int downward_search(node * tree, vector<float> query)
+{
+    int index = 0;
+    while(!(tree[index].children_state == 3))
+    {
+        
+    }
+}   
+
+
     KD_Tree(vector<vector<float>>* all_points)
     {
         this->num_points = pow(2,floor(log2((*all_points).size()))+1);
@@ -200,6 +215,8 @@ tree[index].is_set = 1;
     {
         delete[] tree;
     }
+
+
 
 };
 
