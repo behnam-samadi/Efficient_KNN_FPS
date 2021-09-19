@@ -45,6 +45,7 @@ struct node
     node_boundries boundries;
     vector<float> point;
     bool is_set;
+    int children_state;
 };
 
 
@@ -78,6 +79,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
         //cout<<"with size one";
         //print_vector_float(tree[index].point);
         tree[index].is_set = 1;
+        tree[index].children_state = 3;
         return;
     }
 tree[index].is_set = 1;
@@ -125,6 +127,18 @@ tree[index].is_set = 1;
     for(int i =middle_index+1 ; i <sub_points_indices.size(); i++)
     {
         right_points.push_back(sub_points_indices[i]);
+    }
+    if ((left_points.size() > 0) && (right_points.size()>0))
+    {
+        tree[index].children_state = 0;
+    }
+    else if ((left_points.size()>0) && (right_points.size() ==0))
+    {
+        tree[index].children_state = 1;
+    }
+    else if ((left_points.size()==0) && (right_points.size()>0))
+    {
+        tree[index].children_state = 2;
     }
     
     /*
@@ -268,6 +282,7 @@ void print_vector_2D_bool (vector<vector<bool>>input){
 
 int main()
 {
+
 	int frame_channels = Points_Dim;
     Frame reference = read_data("0000000000.bin", Points_Dim+1, frame_channels);
     Frame query = read_data("0000000001.bin", Points_Dim+1, frame_channels);
@@ -279,7 +294,11 @@ int main()
     vector<vector<float>> test_points = {{2,3,7}, {4,-1,5}, {7,-1,0}, {0,0,0}, {1,2,6}, {0,5,-5}, {-2,7,9}, {5,0,0,}};
     //node * tree = Create_KD_Tree(&(test_points));
     //KD_Tree test_tree(&test_points);
-    KD_Tree test_tree(&reference.data);
+    double runTime = -omp_get_wtime();
+    KD_Tree test_tree(&(reference.data));
+    runTime +=omp_get_wtime();
+    cout<<runTime;
+    exit(0);
 
     //node * tree = Create_KD_Tree(&(reference.data));
     cout<<endl<<"The KD-Tree Has been Created"<<endl;
