@@ -22,7 +22,13 @@ class Frame{
     vector<vector<float>> data;
 };
 
-
+void print_vector_int (vector<int> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
 struct node_boundries
 {
     //vector<vector<bool>> is_set (3 , vector<bool> (2, 0));
@@ -50,6 +56,14 @@ public:
 
 void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<float>> *all_points, vector<int>sub_points_indices, node_boundries boundries)
 {
+ /*   if (index==5)
+    {
+
+        cout<<"oomad too";
+        cout<<dimension<<" "<<endl;
+        print_vector_int(sub_points_indices);
+        //exit(0);
+    }*/
     if (sub_points_indices.size()==0) 
         {
             return;
@@ -164,12 +178,13 @@ tree[index].is_set = 1;
 
     KD_Tree(vector<vector<float>>* all_points)
     {
-        this->num_points = (*all_points).size();
+        this->num_points = pow(2,floor(log2((*all_points).size()))+1);
         this->tree = Create_KD_Tree(all_points);
+        cout<<endl<<"KD_Tree has been created with "<<this->num_points<<" points"<<endl;
     }
     ~KD_Tree()
     {
-        delete tree;
+        delete[] tree;
     }
 
 };
@@ -213,13 +228,6 @@ void print_vector_float (vector<float> v){
     cout<<endl;
 }
 
-void print_vector_int (vector<int> v){
-    for (int i = 0 ; i< v.size();i++)
-    {
-        cout<<endl<<v[i]<<" ";
-    }
-    cout<<endl;
-}
 
 
 
@@ -270,22 +278,24 @@ int main()
     cout<<pow(2,ceil(log2(num_points)));
     vector<vector<float>> test_points = {{2,3,7}, {4,-1,5}, {7,-1,0}, {0,0,0}, {1,2,6}, {0,5,-5}, {-2,7,9}, {5,0,0,}};
     //node * tree = Create_KD_Tree(&(test_points));
-    KD_Tree test_tree(&test_points);
+    //KD_Tree test_tree(&test_points);
+    KD_Tree test_tree(&reference.data);
 
     //node * tree = Create_KD_Tree(&(reference.data));
     cout<<endl<<"The KD-Tree Has been Created"<<endl;
     for (int i = 0 ; i < test_tree.num_points;i++)
     {
+        
         if (test_tree.tree[i].is_set)
         {
         cout<<endl<<i<<"'th node:"<<endl;
-        //cout<<tree[i].dimension<<endl;
-        //cout<<tree[i].branchpoint<<endl;
-        //print_vector_float(tree[i].point);
+        cout<<test_tree.tree[i].dimension<<endl;
+        cout<<test_tree.tree[i].branchpoint<<endl;
+        print_vector_float(test_tree.tree[i].point);
         //exit(0);
         print_vector_2D(test_tree.tree[i].boundries.limits);
         cout<<endl;
-        print_vector_2D_bool(test_tree.tree[i].boundries.is_set);
+        //print_vector_2D_bool(test_tree.tree[i].boundries.is_set);
     }
 
     }
