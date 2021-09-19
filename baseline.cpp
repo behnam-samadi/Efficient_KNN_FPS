@@ -124,6 +124,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
         tree[index].dimension = dimension;
         tree[index].branchpoint = (*all_points)[sub_points_indices[0]][dimension];
         tree[index].point = (*all_points)[sub_points_indices[0]];
+        tree[index].boundries = boundries;
         //cout<<"with size one";
         //print_vector_float(tree[index].point);
         tree[index].is_set = 1;
@@ -250,11 +251,12 @@ int main()
         if (tree[i].is_set)
         {
         cout<<endl<<i<<"'th node:"<<endl;
-        cout<<tree[i].dimension<<endl;
-        cout<<tree[i].branchpoint<<endl;
-        print_vector_float(tree[i].point);
+        //cout<<tree[i].dimension<<endl;
+        //cout<<tree[i].branchpoint<<endl;
+        //print_vector_float(tree[i].point);
         //exit(0);
         print_vector_2D(tree[i].boundries.limits);
+        cout<<endl;
         print_vector_2D_bool(tree[i].boundries.is_set);
     }
 
