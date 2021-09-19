@@ -22,6 +22,7 @@ class Frame{
     vector<vector<float>> data;
 };
 
+
 struct node_boundries
 {
     //vector<vector<bool>> is_set (3 , vector<bool> (2, 0));
@@ -30,87 +31,22 @@ struct node_boundries
     vector<vector<float>> limits;
 };
 
-void print_vector (vector<bool> v){
-    for (int i = 0 ; i< v.size();i++)
-    {
-        cout<<endl<<v[i]<<" ";
-    }
-    cout<<endl;
-}
-
-Frame read_data (string file_adress, int points_dim, int output_dims)
-{ 
-    ifstream fin(file_adress, ios::binary);
-    fin.seekg(0, ios::end);
-    const size_t num_elements = fin.tellg() / sizeof(float);
-    fin.seekg(0, ios::beg);
-    Frame frame;
-    frame.points_dim = output_dims;
-    frame.num_points = num_elements/points_dim;
-    vector<float> data_temp(num_elements);
-    vector<vector<float>> data  (num_elements/points_dim , vector<float> (output_dims, 0));
-    fin.read(reinterpret_cast<char*>(&data_temp[0]), num_elements*sizeof(float));
-    for (size_t i = 0; i < frame.num_points; i++){
-    for(size_t j = 0; j < frame.points_dim; j++)
-    {
-        data[i][j] = data_temp[i*points_dim + j];
-    }
-    
-}
-    frame.data = data;
-    return(frame);
-}
-
-void print_vector_float (vector<float> v){
-    for (int i = 0 ; i< v.size();i++)
-    {
-        cout<<endl<<v[i]<<" ";
-    }
-    cout<<endl;
-}
-
-void print_vector_int (vector<int> v){
-    for (int i = 0 ; i< v.size();i++)
-    {
-        cout<<endl<<v[i]<<" ";
-    }
-    cout<<endl;
-}
-
 struct node
 {
-	int dimension;
-	float branchpoint;
-	//float borders[Points_Dim][2];
+    int dimension;
+    float branchpoint;
+    //float borders[Points_Dim][2];
     node_boundries boundries;
     vector<float> point;
     bool is_set;
 };
 
-void print_vector_2D (vector<vector<float>>input){
-    for (int i = 0; i< input.size();i++)
-    {
-        for(int j = 0; j<input[0].size();j++)
-        {
-            cout<<input[i][j]<<" ";
-        }
-        cout<<endl;
-    }
-
-}
 
 
-void print_vector_2D_bool (vector<vector<bool>>input){
-    for (int i = 0; i< input.size();i++)
-    {
-        for(int j = 0; j<input[0].size();j++)
-        {
-            cout<<input[i][j]<<" ";
-        }
-        cout<<endl;
-    }
-
-}
+class KD_Tree{
+public:
+    node * tree;
+    int num_points;
 
 void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<float>> *all_points, vector<int>sub_points_indices, node_boundries boundries)
 {
@@ -199,15 +135,13 @@ tree[index].is_set = 1;
 }
 
 
-
-
-node * Create_KD_Tree(vector<vector<float>>* all_points)
+    node * Create_KD_Tree(vector<vector<float>>* all_points)
 {
-	node * tree;
-	int num_points = all_points->size();
-	int tree_size = pow(2,floor(log2(num_points))+1);
-	int num_dimensions = (*all_points)[0].size();
-	tree = new node[tree_size];
+    node * tree;
+    int num_points = all_points->size();
+    int tree_size = pow(2,floor(log2(num_points))+1);
+    int num_dimensions = (*all_points)[0].size();
+    tree = new node[tree_size];
     vector<int> sub_points_indices(num_points);
     iota(sub_points_indices.begin(),sub_points_indices.end(),0); //Initializing
     node_boundries boundries;
@@ -228,6 +162,98 @@ node * Create_KD_Tree(vector<vector<float>>* all_points)
     return tree;
 }
 
+    KD_Tree(vector<vector<float>>* all_points)
+    {
+        this->num_points = (*all_points).size();
+        this->tree = Create_KD_Tree(all_points);
+    }
+    ~KD_Tree()
+    {
+        delete tree;
+    }
+
+};
+
+void print_vector (vector<bool> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
+Frame read_data (string file_adress, int points_dim, int output_dims)
+{ 
+    ifstream fin(file_adress, ios::binary);
+    fin.seekg(0, ios::end);
+    const size_t num_elements = fin.tellg() / sizeof(float);
+    fin.seekg(0, ios::beg);
+    Frame frame;
+    frame.points_dim = output_dims;
+    frame.num_points = num_elements/points_dim;
+    vector<float> data_temp(num_elements);
+    vector<vector<float>> data  (num_elements/points_dim , vector<float> (output_dims, 0));
+    fin.read(reinterpret_cast<char*>(&data_temp[0]), num_elements*sizeof(float));
+    for (size_t i = 0; i < frame.num_points; i++){
+    for(size_t j = 0; j < frame.points_dim; j++)
+    {
+        data[i][j] = data_temp[i*points_dim + j];
+    }
+    
+}
+    frame.data = data;
+    return(frame);
+}
+
+void print_vector_float (vector<float> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
+void print_vector_int (vector<int> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
+
+
+void print_vector_2D (vector<vector<float>>input){
+    for (int i = 0; i< input.size();i++)
+    {
+        for(int j = 0; j<input[0].size();j++)
+        {
+            cout<<input[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+}
+
+
+void print_vector_2D_bool (vector<vector<bool>>input){
+    for (int i = 0; i< input.size();i++)
+    {
+        for(int j = 0; j<input[0].size();j++)
+        {
+            cout<<input[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+}
+
+
+
+
+
+
+
 
 
 
@@ -243,21 +269,23 @@ int main()
     int num_points = 12	;
     cout<<pow(2,ceil(log2(num_points)));
     vector<vector<float>> test_points = {{2,3,7}, {4,-1,5}, {7,-1,0}, {0,0,0}, {1,2,6}, {0,5,-5}, {-2,7,9}, {5,0,0,}};
-    node * tree = Create_KD_Tree(&(test_points));
+    //node * tree = Create_KD_Tree(&(test_points));
+    KD_Tree test_tree(&test_points);
+
     //node * tree = Create_KD_Tree(&(reference.data));
     cout<<endl<<"The KD-Tree Has been Created"<<endl;
-    for (int i = 0 ; i < 16;i++)
+    for (int i = 0 ; i < test_tree.num_points;i++)
     {
-        if (tree[i].is_set)
+        if (test_tree.tree[i].is_set)
         {
         cout<<endl<<i<<"'th node:"<<endl;
         //cout<<tree[i].dimension<<endl;
         //cout<<tree[i].branchpoint<<endl;
         //print_vector_float(tree[i].point);
         //exit(0);
-        print_vector_2D(tree[i].boundries.limits);
+        print_vector_2D(test_tree.tree[i].boundries.limits);
         cout<<endl;
-        print_vector_2D_bool(tree[i].boundries.is_set);
+        print_vector_2D_bool(test_tree.tree[i].boundries.is_set);
     }
 
     }

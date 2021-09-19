@@ -22,6 +22,7 @@ enum dist_metric
 };
 
 class Frame{
+    //later: change to private
     public:
     int num_points;
     int points_dim;
