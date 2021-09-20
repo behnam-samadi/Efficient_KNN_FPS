@@ -11,7 +11,7 @@
 #include <limits>
 #include <omp.h>
 #include <time.h>
-#define Points_Dim 3
+#define Points_Dim 2
 using namespace std;
 
 
@@ -416,7 +416,25 @@ int downward_search(node * tree, vector<float> query)
 
 
 
+bool line_circle_cross_check(float center_in_dimension , int line_dimension, bool up_or_down, bool is_set, float branchpoint, float radious)
+{
+    if (is_set == false) return true;
+    if (up_or_down == false) return ((center_in_dimension - radious) <= branchpoint);
+    else return ((center_in_dimension + radious) >= branchpoint);
+}
 
+bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, float radious)
+{
+    for (int d = 0; d< Points_Dim; d++)
+    {
+        for (int up_or_down = 0 ; up_or_down<2;up_or_down++)
+        {
+            if (!(line_circle_cross_check(center[d], d, 1-up_or_down, boundries.is_set[d][up_or_down], boundries.limits[d][up_or_down], radious))) return false;
+            //cout<<"check for dimension "<<d<<" and up_or_down "<<up_or_down<<"not finished the search"<<endl;
+        }
+    }
+    return true;
+}
 
 
 int main()
@@ -431,6 +449,14 @@ int main()
     int num_points = 12	;
     cout<<pow(2,ceil(log2(num_points)));
     vector<vector<float>> test_points = {{2,3,7}, {4,-1,5}, {7,-1,0}, {0,0,0}, {1,2,6}, {0,5,-5}, {-2,7,9}, {5,0,0,}};
+    node_boundries test_boundry;
+    //test_boundry.limits = {{7,8}, {9,10}, {11,12}};
+    //test_boundry.is_set = {{0,0}, {0,0}, {0,0}};
+    test_boundry.limits = {{5,10}, {-19,-7}};
+    test_boundry.is_set = {{1,1}, {1,1}};
+
+    cout<<endl<<cross_check_cirlce_square({7,-1}, test_boundry, 2)<<endl;
+    exit(0);
     //node * tree = Create_KD_Tree(&(test_points));
     
     double runTime = -omp_get_wtime();
