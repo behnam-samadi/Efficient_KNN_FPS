@@ -11,7 +11,7 @@
 #include <limits>
 #include <omp.h>
 #include <time.h>
-#define Points_Dim 2
+#define Points_Dim 3
 using namespace std;
 
 
@@ -221,23 +221,40 @@ int examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float>r
 
 vector<int> KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>* knn, int root_index)
 {
+    cout<<"fucntion calle for "<<root_index<<endl;
     int current_node = downward_search(this->tree, query);
+    cout<<endl<<"current_node: "<<current_node;
+    
     int max_dist;
     bool left;
     while(current_node!=0)
     {
         max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index , 0);
+        //cout<<"vaziate priority_queue bad az pointe aval: "<<endl;
+        //while((*knn).size())
+       // {
+        //    cout<<(*knn).top().first<<" "<<(*knn).top().second<<endl;
+        //    (*knn).pop();
+        //}
+        //exit(0);
         left = ((current_node%2) == 1);
-        current_node = (current_node-1)/2;
+        
         if (left)
         {
-            cross_check_cirlce_square(query , this->tree[(2*current_node+2)].boundries, max_dist);
+            if (cross_check_cirlce_square(query , this->tree[(2*current_node+2)].boundries, max_dist))
+            {
+                KNN_Exact_rec(query, k, knn, 2*current_node+2);
+            }
+
         }
         if (right)
         {
-            cross_check_cirlce_square(query , this->tree[(2*current_node+1)].boundries, max_dist);
+            if (cross_check_cirlce_square(query , this->tree[(2*current_node+1)].boundries, max_dist))
+            {
+                KNN_Exact_rec(query, k, knn, 2*current_node+1);
+            }
         }
-
+    current_node = (current_node-1)/2;
     }
 }
 
@@ -245,8 +262,15 @@ vector<int> KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float,
 vector<int> KNN_Exact(vector<float> query, int k)
 {
     int root_index = 0;
-    priority_queue<pair<float, int>> result;
-    KNN_Exact_rec(query, k , &result, 0);
+    vector<int> result;
+    priority_queue<pair<float, int>> result_queue;
+    KNN_Exact_rec(query, k , &result_queue, 0);
+    while(result_queue.size())
+    {
+        result.push_back(result_queue.top().second);
+        result_queue.pop();
+    }
+    return result;
 }
 
 
@@ -282,6 +306,7 @@ float calc_distance (vector<float> v1, vector<float> v2, dist_metric type)
 
 bool line_circle_cross_check(float center_in_dimension , int line_dimension, bool up_or_down, bool is_set, float branchpoint, float radious)
 {
+    if (is_set == false) return true;
     if (up_or_down == false) return ((center_in_dimension - radious) <= branchpoint);
     else return ((center_in_dimension + radious) >= branchpoint);
 }
@@ -290,14 +315,14 @@ bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, f
 {
     for (int d = 0; d< Points_Dim; d++)
     {
-        for (int up_or_down = 0 ; up_or_down<2;up_or_down)
+        for (int up_or_down = 0 ; up_or_down<2;up_or_down++)
         {
             if (!(line_circle_cross_check(center[d], d, 1-up_or_down, boundries.is_set[d][up_or_down], boundries.limits[d][up_or_down], radious))) return false;
+            //cout<<"check for dimension "<<d<<" and up_or_down "<<up_or_down<<"not finished the search"<<endl;
         }
     }
     return true;
 }
-
 
 
 int downward_search(node * tree, vector<float> query)
@@ -305,7 +330,7 @@ int downward_search(node * tree, vector<float> query)
     int index = 0;
     while(!(tree[index].children_state == 3))
     {
-        cout<<"point :"<<index<<endl;
+        //cout<<"point :"<<index<<endl;
         if (query[tree[index].dimension] >= tree[index].branchpoint)
             index = 2*index+2;
         else
@@ -416,25 +441,6 @@ int downward_search(node * tree, vector<float> query)
 
 
 
-bool line_circle_cross_check(float center_in_dimension , int line_dimension, bool up_or_down, bool is_set, float branchpoint, float radious)
-{
-    if (is_set == false) return true;
-    if (up_or_down == false) return ((center_in_dimension - radious) <= branchpoint);
-    else return ((center_in_dimension + radious) >= branchpoint);
-}
-
-bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, float radious)
-{
-    for (int d = 0; d< Points_Dim; d++)
-    {
-        for (int up_or_down = 0 ; up_or_down<2;up_or_down++)
-        {
-            if (!(line_circle_cross_check(center[d], d, 1-up_or_down, boundries.is_set[d][up_or_down], boundries.limits[d][up_or_down], radious))) return false;
-            //cout<<"check for dimension "<<d<<" and up_or_down "<<up_or_down<<"not finished the search"<<endl;
-        }
-    }
-    return true;
-}
 
 
 int main()
@@ -455,16 +461,23 @@ int main()
     test_boundry.limits = {{5,10}, {-19,-7}};
     test_boundry.is_set = {{1,1}, {1,1}};
 
-    cout<<endl<<cross_check_cirlce_square({7,-1}, test_boundry, 2)<<endl;
-    exit(0);
+    //cout<<endl<<cross_check_cirlce_square({7,-1}, test_boundry, 2)<<endl;
+    //exit(0);
     //node * tree = Create_KD_Tree(&(test_points));
+    print_vector_float(reference.data[95961]);//0.5 0.5 0.5
+    //exit(0);
     
     double runTime = -omp_get_wtime();
-    //KD_Tree test_tree(&(reference.data));
-    KD_Tree test_tree(&test_points);
+    KD_Tree test_tree(&(reference.data));
+    print_vector_int(test_tree.KNN_Exact({0.5, 0.5,0.5}, 20));
+
+    exit(0);
+
+    //KD_Tree test_tree(&test_points);
     runTime +=omp_get_wtime();
     cout<<runTime;
-    cout<<endl<<"result: "<<downward_search(test_tree.tree, {-2,7,9});
+    //cout<<endl<<"result: "<<downward_search(test_tree.tree, {-2,7,9});
+
     exit(0);
 
     //node * tree = Create_KD_Tree(&(reference.data));
