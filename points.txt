@@ -1,0 +1,2 @@
+examind must be zero for all points when a new tree is created
+
