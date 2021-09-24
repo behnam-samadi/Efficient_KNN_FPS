@@ -13,7 +13,7 @@
 #include <time.h>
 #define Points_Dim 3
 using namespace std;
-
+int num = 0;
 
 enum dist_metric
 {
@@ -224,9 +224,14 @@ float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float
 }
 
 
-void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>* knn, int root_index)
+void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>* knn, int root_index, float current_max_dist)
 {
-    cout<<"Starting fucntion call for "<<root_index;
+    cout<<endl<<endl;
+    cout<<"---------------------------------------"<<endl;
+    num++;
+    float max_dist = current_max_dist;
+    if (num==10) exit(0);
+        cout<<"Starting fucntion call for "<<root_index<<endl;
     if (this->tree[root_index].examined == true)
     {
         cout<<"terminate search because of duplication"<<endl;
@@ -240,15 +245,15 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
    //     exit(0);
    // }
     cout<<"search from the root: "<<root_index<<" result: "<< current_node;
-    float max_dist;
-    max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index , 0);
+    max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index , max_dist);
     cout<<endl<<"point in position "<<current_node<<" has been examined as root and max_dist: "<<max_dist;
+    bool from_left = ((current_node%2) == 1);
+    current_node = (current_node-1)/2;
+    cout<<endl<<"go upward to : "<<current_node;
+
     while(current_node!=root_index)
     {
-        left = ((current_node%2) == 1);
-        current_node = (current_node-1)/2;
-        cout<<endl<<"go upward to : "<<current_node;
-        max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index , 0);
+        max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index ,max_dist);
         cout<<endl<<"point in position "<<current_node<<" has been examined";
         cout<<endl<<"max_dist changed to: " << max_dist<<endl;
         //cout<<"vaziate priority_queue bad az pointe aval: "<<endl;
@@ -260,14 +265,14 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
         //exit(0);
         
         
-        if (left)
+        if (from_left)
         {
             //exit(0);
             if (cross_check_cirlce_square(query , this->tree[(2*current_node+2)].boundries, max_dist))
             {
                 cout<<"recursive call for (L): " <<2*current_node+2<<endl;
                 //exit(0);
-                KNN_Exact_rec(query, k, knn, 2*current_node+2);
+                KNN_Exact_rec(query, k, knn, 2*current_node+2 ,max_dist);
             }
 
         }
@@ -277,12 +282,12 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
             {
                 cout<<"recursive call for (R): " <<2*current_node+1<<endl;
                 //exit(0);
-                KNN_Exact_rec(query, k, knn, 2*current_node+1);
+                KNN_Exact_rec(query, k, knn, 2*current_node+1, max_dist);
             }
         }
     
     current_node = (current_node-1)/2;
-    left = ((current_node%2) == 1);
+    from_left = ((current_node%2) == 1);
     cout<<endl<<"go to parent: "<<current_node<<endl;
     }
     cout<<"Ending fucntion call for "<<root_index<<endl<<endl;;
@@ -291,10 +296,10 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
 
 vector<int> KNN_Exact(vector<float> query, int k)
 {
-    int root_index = 0;
+    //int root_index = 0;
     vector<int> result;
     priority_queue<pair<float, int>> result_queue;
-    KNN_Exact_rec(query, k , &result_queue, 0);
+    KNN_Exact_rec(query, k , &result_queue, 0,0);
     while(result_queue.size())
     {
         result.push_back(result_queue.top().second);
@@ -455,7 +460,7 @@ void print_vector_2D_bool (vector<vector<bool>>input){
 
 
 
-int downward_search(node * tree, vector<float> query)
+/*int downward_search(node * tree, vector<float> query)
 {
     int index = 0;
     while(!(tree[index].children_state == 3))
@@ -468,7 +473,7 @@ int downward_search(node * tree, vector<float> query)
     }
     return index;
 }   
-
+*/
 
 
 
