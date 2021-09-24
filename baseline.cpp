@@ -28,6 +28,16 @@ class Frame{
     vector<vector<float>> data;
 };
 
+
+
+void print_vector_float (vector<float> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
 void print_vector_int (vector<int> v){
     for (int i = 0 ; i< v.size();i++)
     {
@@ -202,25 +212,31 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
     cout<<endl<<endl<<endl<<"kdtree cretaed";
     return tree;
 }
-float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float>reference, vector<float>query, int point_index, float max_dist)
+float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float>reference, vector<float>query, int point_index)
 {
     float dist = calc_distance(reference , query , Euclidean);
     if ((*queue).size() < k)
     {
         (*queue).push(make_pair(dist, point_index));
-        max_dist = (*queue).top().first;
     }
     else
     {
-        if (dist < max_dist)
+        if (dist==0)
         {
+            cout<<"|||||||||||||||||||||||||||||||||||||||||||||||in sefr bood:"<<endl;
+            print_vector_float(query);
+            print_vector_float(reference);
+            //exit(0);
+        }
+        if (dist < (*queue).top().first)
+        {
+            cout<<endl<<"**********************"<<endl<<dist<<"<"<<(*queue).top().first<<endl<<endl<<endl;
             (*queue).pop();
             (*queue).push(make_pair(dist, point_index));
-            max_dist = (*queue).top().first;
         }
     }
     this->tree[point_index].examined = true;
-    return max_dist;
+    return ((*queue).top().first);
 }
 
 
@@ -230,30 +246,37 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
     cout<<"---------------------------------------"<<endl;
     num++;
     float max_dist = current_max_dist;
-    if (num==10) exit(0);
+    //if (num==50) exit(0);
         cout<<"Starting fucntion call for "<<root_index<<endl;
     if (this->tree[root_index].examined == true)
     {
         cout<<"terminate search because of duplication"<<endl;
         return;
     }
-    int current_node = downward_search(this->tree,root_index, query);
+    int leaf = downward_search(this->tree,root_index, query);
+    if (leaf == root_index)
+    {
+        cout<<endl<<leaf<<"is a root index";
+        max_dist = examine_point(knn, k, this->tree[leaf].point, query,this->tree[leaf].point_index);
+        cout<<endl<<"point in position "<<leaf<<" has been examined as root and max_dist: "<<max_dist;
+        return;
+    }
     //if (root_index == 95962)
    // {
    //     cout<<"95962: "<<endl;
    //     cout<<current_node;
    //     exit(0);
    // }
-    cout<<"search from the root: "<<root_index<<" result: "<< current_node;
-    max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index , max_dist);
-    cout<<endl<<"point in position "<<current_node<<" has been examined as root and max_dist: "<<max_dist;
-    bool from_left = ((current_node%2) == 1);
-    current_node = (current_node-1)/2;
+    cout<<"search from the root: "<<root_index<<" result: "<< leaf;
+    max_dist = examine_point(knn, k, this->tree[leaf].point, query,this->tree[leaf].point_index);
+    cout<<endl<<"point in position "<<leaf<<" has been examined as root and max_dist: "<<max_dist;
+    bool from_left = ((leaf%2) == 1);
+    int current_node = (leaf-1)/2;
     cout<<endl<<"go upward to : "<<current_node;
-
-    while(current_node!=root_index)
+    bool root_reached = false;
+    while(!root_reached)
     {
-        max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index ,max_dist);
+        max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index);
         cout<<endl<<"point in position "<<current_node<<" has been examined";
         cout<<endl<<"max_dist changed to: " << max_dist<<endl;
         //cout<<"vaziate priority_queue bad az pointe aval: "<<endl;
@@ -264,30 +287,39 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
         //}
         //exit(0);
         
-        
+     cout<<endl<<"from_left"<<from_left<<endl;   
         if (from_left)
         {
             //exit(0);
+            if (this->tree[2*current_node+2].is_set)
+                {
             if (cross_check_cirlce_square(query , this->tree[(2*current_node+2)].boundries, max_dist))
             {
+                
                 cout<<"recursive call for (L): " <<2*current_node+2<<endl;
                 //exit(0);
                 KNN_Exact_rec(query, k, knn, 2*current_node+2 ,max_dist);
+            
             }
+        }
 
         }
         else
         {
+            if (this->tree[2*current_node+1].is_set)
+        {
             if (cross_check_cirlce_square(query , this->tree[(2*current_node+1)].boundries, max_dist))
             {
+                
                 cout<<"recursive call for (R): " <<2*current_node+1<<endl;
                 //exit(0);
                 KNN_Exact_rec(query, k, knn, 2*current_node+1, max_dist);
             }
         }
-    
-    current_node = (current_node-1)/2;
+        }
+    if (current_node<=root_index) root_reached = true;
     from_left = ((current_node%2) == 1);
+    current_node = (current_node-1)/2;
     cout<<endl<<"go to parent: "<<current_node<<endl;
     }
     cout<<"Ending fucntion call for "<<root_index<<endl<<endl;;
@@ -421,13 +453,7 @@ Frame read_data (string file_adress, int points_dim, int output_dims)
     return(frame);
 }
 
-void print_vector_float (vector<float> v){
-    for (int i = 0 ; i< v.size();i++)
-    {
-        cout<<endl<<v[i]<<" ";
-    }
-    cout<<endl;
-}
+
 
 
 
@@ -457,7 +483,28 @@ void print_vector_2D_bool (vector<vector<bool>>input){
 
 }
 
-
+/*vector<int> KNN_one_row (Frame * reference, Frame * query, int K,dist_metric metric, int index){
+    int num_ref_points = (*reference).data.size();
+    int num_query_points = (*query).data.size();
+    vector<int> result(K);
+    vector<float>  distance (num_ref_points);
+    int i = index;
+        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        for (int j = 0; j<num_ref_points;j++)
+        {
+            distance[j] = calc_distance((*query).data[i], (*reference).data[j], metric);
+        }
+        vector<int> topk = topK(distance, K);
+        //cout<<"in javabe nahayi ast:"<<endl;
+        //print_vector(topk);
+        
+        for(int c = 0; c<K;c++)
+        {
+            result[c] = topk[c];
+            
+        }
+return(result);
+}*/
 
 
 /*int downward_search(node * tree, vector<float> query)
@@ -509,6 +556,8 @@ int main()
 
     //print_vector_int(test_tree.KNN_Exact({0.5, 0.5,0.5}, 20));
     print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
+    print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
+
 
 
 
