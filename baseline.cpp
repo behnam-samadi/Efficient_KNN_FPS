@@ -466,18 +466,19 @@ bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, f
 
 int downward_search(node * tree,int start_index, vector<float> query)
 {
-    if (start_index==64363)
-    {
-        cout<<endl<<endl<<endl<<endl<<"/////////////////------------------"<<endl<<endl<<endl<<endl;
-    }
     int index = start_index;
     while(!(tree[index].children_state == 3))
     {
-        if (start_index==64363)
-    {
-        cout<<endl<<endl<<endl<<endl<<"/////////////////------------------"<<endl<<endl<<endl<<endl;
-        cout<<"for index "<<index<<" "<<tree[index].children_state;   
-    }
+        if (tree[index].children_state == 1)
+        {
+            index = 2*index +1;
+            break;       
+        }
+        if (tree[index].children_state == 2)
+        {
+            index = 2*index +2;
+            break;       
+        }
         //cout<<"point :"<<index<<endl;
         if (query[tree[index].dimension] >= tree[index].branchpoint)
         {
@@ -487,7 +488,6 @@ int downward_search(node * tree,int start_index, vector<float> query)
         {
             index = 2*index+1;
         }
-    cout<<endl<<"index changed to "<<index;
     }
     return index;
 }   
@@ -648,9 +648,9 @@ int main()
     cout<<test_tree.tree[64363].dimension<<endl;
     print_vector_2D(test_tree.tree[128727].boundries.limits);
     print_vector_float(test_tree.tree[128727].point);
-    exit(0);
+    
 print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
-exit(0);
+
     //print_vector_int(test_tree.KNN_Exact({0.5, 0.5,0.5}, 20));
     int k = 20;
     vector<int> kd_result;
@@ -663,7 +663,7 @@ exit(0);
     
     //print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
     //print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
-    exit(0);
+    
     for (int test = 0 ; test < 512; test++)
     {
         cout<<endl<<"test%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<"testing"<< test<<"'th point ";
