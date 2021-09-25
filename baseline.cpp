@@ -14,7 +14,7 @@
 #define Points_Dim 3
 using namespace std;
 int num = 0;
-
+int num_exam = 0;
 enum dist_metric
 {
     Modified_Manhattan,
@@ -281,6 +281,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
 }
 float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float>reference, vector<float>query, int point_index)
 {
+    num_exam++;
     float dist = calc_distance(reference , query , Euclidean);
     if ((*queue).size() < k)
     {
@@ -613,7 +614,7 @@ int main()
 
 	int frame_channels = Points_Dim;
     Frame reference = read_data("0000000000.bin", Points_Dim+1, frame_channels);
-    Frame query = read_data("0000000001.bin", Points_Dim+1, frame_channels);
+    Frame query = read_data("0000000000.bin", Points_Dim+1, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     int num_query_points_orig = num_query_points;
@@ -661,11 +662,20 @@ print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
     //print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
     //print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
     
-    for (int test = 0 ; test < 512; test++)
+    for (int test = 1 ; test < 512; test++)
     {
+
         cout<<endl<<"test%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<"testing"<< test<<"'th point ";
      kd_result = test_tree.KNN_Exact(query.data[test], k);
+     cout<<"number of points examined: "<<endl<<num_exam;
+     exit(0);
      correct_result = KNN_one_row(&reference, &query, k , Euclidean, test);
+     if (test==20)
+        {
+            print_vector_int(kd_result);
+            print_vector_int(correct_result);
+            exit(0);
+        }
      bool found;   
      int score_in = 0;
      for (int i = 0 ; i < k ; i++)
