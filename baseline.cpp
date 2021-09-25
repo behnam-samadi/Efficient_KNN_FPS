@@ -290,14 +290,14 @@ float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float
     {
         if (dist==0)
         {
-            cout<<"|||||||||||||||||||||||||||||||||||||||||||||||in sefr bood:"<<endl;
-            print_vector_float(query);
-            print_vector_float(reference);
+            //cout<<"|||||||||||||||||||||||||||||||||||||||||||||||in sefr bood:"<<endl;
+            //print_vector_float(query);
+            //print_vector_float(reference);
             //exit(0);
         }
         if (dist < (*queue).top().first)
         {
-            cout<<endl<<"**********************"<<endl<<dist<<"<"<<(*queue).top().first<<endl<<endl<<endl;
+            //cout<<endl<<"**********************"<<endl<<dist<<"<"<<(*queue).top().first<<endl<<endl<<endl;
             (*queue).pop();
             (*queue).push(make_pair(dist, point_index));
         }
@@ -309,13 +309,10 @@ float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float
 
 void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>* knn, int root_index, float current_max_dist)
 {
-    cout<<endl<<endl;
-    cout<<"---------------------------------------"<<endl;
-    num++;
     float max_dist = current_max_dist;
     //if (num==50) exit(0);
-        cout<<"Starting fucntion call for "<<root_index<<endl;
-        cout<<"after if";
+    //    cout<<"Starting fucntion call for "<<root_index<<endl;
+    //    cout<<"after if";
         //cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
         //cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
     //if (this->tree[root_index].examined == true)
@@ -324,13 +321,13 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
     //    return;
     //}
     //else{cout<<endl<<"no terminate";}
-    cout<<"after if";  
+    //cout<<"after if";  
     int leaf = downward_search(this->tree,root_index, query);
     if (leaf == root_index)
     {
-        cout<<endl<<leaf<<"is a root index";
+     //   cout<<endl<<leaf<<"is a root index";
         max_dist = examine_point(knn, k, this->tree[leaf].point, query,this->tree[leaf].point_index);
-        cout<<endl<<"point in position "<<leaf<<" has been examined as root and max_dist: "<<max_dist;
+    //    cout<<endl<<"point in position "<<leaf<<" has been examined as root and max_dist: "<<max_dist;
         return;
     }
     //if (root_index == 95962)
@@ -339,18 +336,18 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
    //     cout<<current_node;
    //     exit(0);
    // }
-    cout<<"search from the root: "<<root_index<<" result: "<< leaf;
+    //cout<<"search from the root: "<<root_index<<" result: "<< leaf;
     max_dist = examine_point(knn, k, this->tree[leaf].point, query,this->tree[leaf].point_index);
-    cout<<endl<<"point in position "<<leaf<<" has been examined as root and max_dist: "<<max_dist;
+    //cout<<endl<<"point in position "<<leaf<<" has been examined as root and max_dist: "<<max_dist;
     bool from_left = ((leaf%2) == 1);
     int current_node = (leaf-1)/2;
-    cout<<endl<<"go upward to : "<<current_node;
+    //cout<<endl<<"go upward to : "<<current_node;
     bool root_reached = false;
     while(!root_reached)
     {
         max_dist = examine_point(knn, k, this->tree[current_node].point, query,this->tree[current_node].point_index);
-        cout<<endl<<"point in position "<<current_node<<" has been examined";
-        cout<<endl<<"max_dist changed to: " << max_dist<<endl;
+      //  cout<<endl<<"point in position "<<current_node<<" has been examined";
+        //cout<<endl<<"max_dist changed to: " << max_dist<<endl;
         //cout<<"vaziate priority_queue bad az pointe aval: "<<endl;
         //while((*knn).size())
        // {
@@ -359,7 +356,7 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
         //}
         //exit(0);
         
-     cout<<endl<<"from_left"<<from_left<<endl;   
+     //cout<<endl<<"from_left"<<from_left<<endl;   
         if (from_left)
         {
             //exit(0);
@@ -368,7 +365,7 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
             if (cross_check_cirlce_square(query , this->tree[(2*current_node+2)].boundries, max_dist))
             {
                 
-                cout<<"recursive call for (L): " <<2*current_node+2<<endl;
+       //         cout<<"recursive call for (L): " <<2*current_node+2<<endl;
                 //exit(0);
                 KNN_Exact_rec(query, k, knn, 2*current_node+2 ,max_dist);
             
@@ -383,7 +380,7 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
             if (cross_check_cirlce_square(query , this->tree[(2*current_node+1)].boundries, max_dist))
             {
                 
-                cout<<"recursive call for (R): " <<2*current_node+1<<endl;
+         //       cout<<"recursive call for (R): " <<2*current_node+1<<endl;
                 //exit(0);
                 KNN_Exact_rec(query, k, knn, 2*current_node+1, max_dist);
             }
@@ -392,9 +389,9 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
     if (current_node<=root_index) root_reached = true;
     from_left = ((current_node%2) == 1);
     current_node = (current_node-1)/2;
-    cout<<endl<<"go to parent: "<<current_node<<endl;
+    //cout<<endl<<"go to parent: "<<current_node<<endl;
     }
-    cout<<"Ending fucntion call for "<<root_index<<endl<<endl;;
+    //cout<<"Ending fucntion call for "<<root_index<<endl<<endl;;
 }
 
 
@@ -669,15 +666,21 @@ print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
         cout<<endl<<"test%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<"testing"<< test<<"'th point ";
      kd_result = test_tree.KNN_Exact(query.data[test], k);
      correct_result = KNN_one_row(&reference, &query, k , Euclidean, test);
+     bool found;   
+     int score_in = 0;
      for (int i = 0 ; i < k ; i++)
      {
-        bool found = false;
+        found = false;
+        cout<<endl;
         for (int j = 0 ; j < k ; j++)
         {
+            cout<<endl<<(kd_result[i] == correct_result[j]);
             if (kd_result[i] == correct_result[j]) found = true;
         }
-        if (found) score++;
+        if (found) score_in++;
+        
      }
+     if (score_in == k) score++;
     }
     cout<<endl<<score;
     exit(0);
