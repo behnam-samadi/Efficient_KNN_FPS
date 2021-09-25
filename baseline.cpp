@@ -315,8 +315,9 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
     float max_dist = current_max_dist;
     //if (num==50) exit(0);
         cout<<"Starting fucntion call for "<<root_index<<endl;
-        cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
-        cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
+        cout<<"after if";
+        //cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
+        //cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
     //if (this->tree[root_index].examined == true)
     //{
     //    cout<<"terminate search because of duplication"<<endl;
@@ -465,14 +466,28 @@ bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, f
 
 int downward_search(node * tree,int start_index, vector<float> query)
 {
+    if (start_index==64363)
+    {
+        cout<<endl<<endl<<endl<<endl<<"/////////////////------------------"<<endl<<endl<<endl<<endl;
+    }
     int index = start_index;
     while(!(tree[index].children_state == 3))
     {
+        if (start_index==64363)
+    {
+        cout<<endl<<endl<<endl<<endl<<"/////////////////------------------"<<endl<<endl<<endl<<endl;
+        cout<<"for index "<<index<<" "<<tree[index].children_state;   
+    }
         //cout<<"point :"<<index<<endl;
         if (query[tree[index].dimension] >= tree[index].branchpoint)
+        {
             index = 2*index+2;
+        }
         else
+        {
             index = 2*index+1;
+        }
+    cout<<endl<<"index changed to "<<index;
     }
     return index;
 }   
@@ -624,6 +639,16 @@ int main()
     
     double runTime = -omp_get_wtime();
     KD_Tree test_tree(&(reference.data));
+    cout<<test_tree.tree[128727].branchpoint<<endl;
+    cout<<test_tree.tree[128727].dimension<<endl;
+    print_vector_2D(test_tree.tree[128727].boundries.limits);
+    print_vector_float(test_tree.tree[128727].point);
+    cout<<"64363"<<endl;
+    cout<<test_tree.tree[64363].branchpoint<<endl;
+    cout<<test_tree.tree[64363].dimension<<endl;
+    print_vector_2D(test_tree.tree[128727].boundries.limits);
+    print_vector_float(test_tree.tree[128727].point);
+    exit(0);
 print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
 exit(0);
     //print_vector_int(test_tree.KNN_Exact({0.5, 0.5,0.5}, 20));
