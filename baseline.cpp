@@ -29,6 +29,73 @@ class Frame{
 };
 
 
+float calc_distance_ (vector<float> v1, vector<float> v2, dist_metric type)
+{    
+    if (type == Modified_Manhattan)
+    {
+        float sum1 = 0;
+        float sum2 = 0;
+        for(int i = 0; i<v1.size();i++)
+            sum1+=v1[i];
+        for(int i = 0; i<v2.size();i++)
+            sum2+=v2[i];
+        return (abs(sum2 - sum1));
+    }
+    else
+    {
+        float sum = 0;
+        for(int i = 0; i<v1.size();i++)
+        {
+            if (type==Euclidean)
+            sum+= pow(abs(v1[i] - v2[i]), 2);
+            if (type==Manhattan)
+            sum+= abs(v1[i] - v2[i]);
+        }
+        float result = sum;
+        if (type == Euclidean)
+            result = sqrt(result);
+        return(result);
+        }
+}
+vector<int> topK_(vector<float> input, int K){
+    float inf = std::numeric_limits<float>::max();
+    vector<int> result(K);
+    for (int c = 0; c<K; c++){
+        int min_arg = 0;
+        for (int j = 0; j<input.size();j++)
+        {
+            if(input[j] < input[min_arg]){
+                min_arg = j;
+            }
+        }
+        result[c]  = min_arg;
+        input[min_arg] = inf;
+    }
+return (result);
+}
+
+vector<int> KNN_one_row (Frame * reference, Frame * query, int K,dist_metric metric, int index){
+    int num_ref_points = (*reference).data.size();
+    int num_query_points = (*query).data.size();
+    vector<int> result(K);
+    vector<float>  distance (num_ref_points);
+    int i = index;
+        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        for (int j = 0; j<num_ref_points;j++)
+        {
+            distance[j] = calc_distance_((*query).data[i], (*reference).data[j], metric);
+        }
+        vector<int> topk = topK_(distance, K);
+        //cout<<"in javabe nahayi ast:"<<endl;
+        //print_vector(topk);
+        
+        for(int c = 0; c<K;c++)
+        {
+            result[c] = topk[c];
+            
+        }
+return(result);
+}
 
 void print_vector_float (vector<float> v){
     for (int i = 0 ; i< v.size();i++)
@@ -248,11 +315,15 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
     float max_dist = current_max_dist;
     //if (num==50) exit(0);
         cout<<"Starting fucntion call for "<<root_index<<endl;
-    if (this->tree[root_index].examined == true)
-    {
-        cout<<"terminate search because of duplication"<<endl;
-        return;
-    }
+        cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
+        cout<<endl<<"examined: "<<tree[root_index].examined<<endl;
+    //if (this->tree[root_index].examined == true)
+    //{
+    //    cout<<"terminate search because of duplication"<<endl;
+    //    return;
+    //}
+    //else{cout<<endl<<"no terminate";}
+    cout<<"after if";  
     int leaf = downward_search(this->tree,root_index, query);
     if (leaf == root_index)
     {
@@ -553,10 +624,39 @@ int main()
     
     double runTime = -omp_get_wtime();
     KD_Tree test_tree(&(reference.data));
-
+print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
+exit(0);
     //print_vector_int(test_tree.KNN_Exact({0.5, 0.5,0.5}, 20));
-    print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
-    print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
+    int k = 20;
+    vector<int> kd_result;
+    vector<int> correct_result;
+    int score = 0;
+    print_vector_float(query.data[0]);
+    print_vector_float(reference.data[0]);
+    
+
+    
+    //print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
+    //print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
+    exit(0);
+    for (int test = 0 ; test < 512; test++)
+    {
+        cout<<endl<<"test%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<"testing"<< test<<"'th point ";
+     kd_result = test_tree.KNN_Exact(query.data[test], k);
+     correct_result = KNN_one_row(&reference, &query, k , Euclidean, test);
+     for (int i = 0 ; i < k ; i++)
+     {
+        bool found = false;
+        for (int j = 0 ; j < k ; j++)
+        {
+            if (kd_result[i] == correct_result[j]) found = true;
+        }
+        if (found) score++;
+     }
+    }
+    cout<<endl<<score;
+    exit(0);
+    
 
 
 
