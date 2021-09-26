@@ -629,9 +629,9 @@ int main()
 int k = 50;
 int num_threads;
 vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
-    for (int round = 0 ; round < round_num; round++)
-    {
-        cout<<endl<<endl<<endl<<"round "<<round<<"--------------------------------------------------";
+    
+    
+        //cout<<endl<<endl<<endl<<"round "<<round<<"--------------------------------------------------";
     thread_data* args = new thread_data;
     vector<pthread_t*> round_threads;
     args->reference = &reference;
@@ -643,8 +643,10 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
     args->start_reference = 0;
     args->end_reference = reference.data.size()-1;
     args->num_ref_points = num_ref_points;
-    args->start_query = round*round_size;
-    args->end_query = (round+1)*round_size-1;
+    //args->start_query = round*round_size;
+    //args->end_query = (round+1)*round_size-1;
+    args->start_query = 0;
+    args->end_query = 128;
     args->result = &exact_fast_result;
     args->threads = &round_threads;
     args->reference_order = &reference_order;
@@ -668,7 +670,7 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
 
        delete round_threads[tn];
     }
-}
+
 
 runTime +=omp_get_wtime();
 cout<<"calculated";
