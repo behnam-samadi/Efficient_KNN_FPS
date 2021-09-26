@@ -587,16 +587,16 @@ int main()
 {   
     int frame_channels = 3;
     Frame reference = read_data("0000000000.bin", 4, frame_channels);
-    Frame query = read_data("0000000001.bin", 4, frame_channels);
+    Frame query = read_data("0000000000.bin", 4, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     int num_query_points_orig = num_query_points;
-    num_query_points = 64;
+    num_query_points = 512;
     int round_size = 64;
     int round_num = num_query_points/round_size;
     double runTime = -omp_get_wtime();
     vector<float> reference_projected(num_ref_points);
-    vector<float> query_projected(round_size);
+    vector<float> query_projected(num_query_points);
     for (int i =0 ; i<num_ref_points;i++)
     {
         reference_projected[i] = 0;
@@ -605,7 +605,7 @@ int main()
         reference_projected[i] += reference.data[i][j];
         }
     }
-    for (int i =0 ; i<round_size;i++)
+    for (int i =0 ; i<num_query_points;i++)
     {
         query_projected[i] = 0;
         for (int j = 0; j<query.data[0].size();j++)
@@ -621,7 +621,7 @@ int main()
     sort( reference_projected.begin(),reference_projected.end());
 
 
-    vector<int> query_order(round_size);
+    vector<int> query_order(num_query_points);
     iota(query_order.begin(),query_order.end(),0); //Initializing
     sort( query_order.begin(),query_order.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
     sort( query_projected.begin(),query_projected.end());
@@ -629,9 +629,8 @@ int main()
 int k = 50;
 int num_threads;
 vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
-    
-    
-        //cout<<endl<<endl<<endl<<"round "<<round<<"--------------------------------------------------";
+    for (int round = 0 ; round < round_num; round++)
+    {
     thread_data* args = new thread_data;
     vector<pthread_t*> round_threads;
     args->reference = &reference;
@@ -643,10 +642,8 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
     args->start_reference = 0;
     args->end_reference = reference.data.size()-1;
     args->num_ref_points = num_ref_points;
-    //args->start_query = round*round_size;
-    //args->end_query = (round+1)*round_size-1;
-    args->start_query = 0;
-    args->end_query = 128;
+    args->start_query = round*round_size;
+    args->end_query = (round+1)*round_size-1;
     args->result = &exact_fast_result;
     args->threads = &round_threads;
     args->reference_order = &reference_order;
@@ -660,7 +657,7 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
     bool round_working = true;
     for(int t = 0; t<round_threads.size();t++)
     {
-        cout<<"started for "<<args->start_query<<" "<<args->end_query<<" to "<<t<<" "<<"from "<<round_threads.size()<<" "<<endl;
+        //cout<<"started for "<<args->start_query<<" "<<args->end_query<<" to "<<t<<" "<<"from "<<round_threads.size()<<" "<<endl;
         pthread_join(*(round_threads[t]),NULL);
     }
 
@@ -670,14 +667,19 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
 
        delete round_threads[tn];
     }
-
+}
 
 runTime +=omp_get_wtime();
-cout<<"calculated";
-exit(0);
-int score = 0;
-for (int q = 0 ;q <200;q++)
+cout<<"calculation time: "<<runTime<<endl<<"Do you want to perform an accuracy check? (1or0)"<<endl;
+bool cont;
+cin>>cont;
+if(cont)
 {
+
+int score = 0;
+for (int q = 0 ;q <num_query_points;q++)
+{
+    cout<<endl<<"test number: "<<q<<" from "<<num_query_points;
     vector<int> KNN_one_row_test =  KNN_one_row(&reference,&query,k,Euclidean,query_order[q]);
     int matches = 0;
     for (int j = 0; j < k; j++)
@@ -703,4 +705,5 @@ cout<<"Number of Nearest Neighbors (K):"<<k<<endl;
 cout<<"Number of Correct Answers:      "<<score<<endl;
 cout<<"Execution Time:                 "<<runTime<<endl;
 cout<<"Number of Threads Created:      "<<num_threads<<endl;
+}
 }
