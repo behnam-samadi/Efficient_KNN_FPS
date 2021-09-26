@@ -674,7 +674,7 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
 
 runTime +=omp_get_wtime();
 cout<<"calculated";
-
+exit(0);
 int score = 0;
 for (int q = 0 ;q <200;q++)
 {
