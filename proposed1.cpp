@@ -360,8 +360,9 @@ if (left_arrow>0)
 int c = 0;
     while(knn.size())
     {
-        
+        //cout<<endl<<"row "<<row<<"col "<<c<<"is changing";
         (*output)[row][c++] = knn.top().second;
+        //cout<<endl<<"row "<<row<<"col "<<c-1<<"changed";
         knn.pop();
     }
 }
@@ -479,6 +480,7 @@ spliting_state one_step_parallel_binary_search(vector<float> *reference_projecte
 
 void* parallel_binary_search(void * data_void)
 {
+    
 
     thread_data* data = (thread_data*)(data_void);
     vector<float> * reference_projected = data->reference_projected;
@@ -492,11 +494,13 @@ void* parallel_binary_search(void * data_void)
     int end_reference = data->end_reference;
     int start_query = data->start_query;
     int end_query = data->end_query;
+
     int num_ref_points = data->num_ref_points;
     pthread_mutex_t* push_mutex = data->push_mutex;
     vector<vector<int>>* result = data->result;
     vector<pthread_t*>* threads = data->threads;
     int middle_index;
+    //cout<<endl<<"start_query: "<<start_query<<" end_query: "<<end_query;
     spliting_state state;
     do{   
     if ((end_reference - start_reference)<2)
@@ -504,6 +508,7 @@ void* parallel_binary_search(void * data_void)
         for (int q = start_query ; q<= end_query;q++)
         {
             int nearest = binary_search(reference_projected, (*query_projected)[q], start_reference, end_reference);
+            //cout<<endl<<"Line:508 : q: "<<q;
          exact_knn_projected     (result                     ,reference       ,reference_projected                ,reference_order              ,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,num_ref_points);       
         }
         delete data;
@@ -531,6 +536,7 @@ void* parallel_binary_search(void * data_void)
             args->start_query = state.divider2;
             args->num_ref_points = num_ref_points;
             args->end_query = end_query;
+            //cout<<endl<<" args->start_query "<<args->start_query<<" args->end_query "<<args->end_query;
             args->result = result;
             args->threads = threads;
             args->push_mutex = push_mutex;
@@ -550,10 +556,31 @@ void* parallel_binary_search(void * data_void)
     if (state.left_size == 1)
         {
             int nearest = binary_search(reference_projected, (*query_projected)[start_query], start_reference, end_reference);
+            //cout<<endl<<"Line:555 : start_query: "<<start_query;
             exact_knn_projected     (result                     ,reference         ,reference_projected                ,reference_order              ,query->data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,num_ref_points);    
         }
         delete data;
         
+}
+void print_vector_int (vector<int> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
+
+void print_vector_2D (vector<vector<int>>input){
+    for (int i = 0; i< input.size();i++)
+    {
+        for(int j = 0; j<input[0].size();j++)
+        {
+            cout<<input[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
 }
 
 int main()
@@ -565,7 +592,8 @@ int main()
     int num_query_points = query.data.size();
     int num_query_points_orig = num_query_points;
     num_query_points = 64;
-    int round_size = num_query_points;
+    int round_size = 64;
+    int round_num = num_query_points/round_size;
     double runTime = -omp_get_wtime();
     vector<float> reference_projected(num_ref_points);
     vector<float> query_projected(round_size);
@@ -598,8 +626,12 @@ int main()
     sort( query_order.begin(),query_order.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
     sort( query_projected.begin(),query_projected.end());
 
-    int k = 50;
-    vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
+int k = 50;
+int num_threads;
+vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
+    for (int round = 0 ; round < round_num; round++)
+    {
+        cout<<endl<<endl<<endl<<"round "<<round<<"--------------------------------------------------";
     thread_data* args = new thread_data;
     vector<pthread_t*> round_threads;
     args->reference = &reference;
@@ -611,8 +643,8 @@ int main()
     args->start_reference = 0;
     args->end_reference = reference.data.size()-1;
     args->num_ref_points = num_ref_points;
-    args->start_query = 0;
-    args->end_query = round_size-1;
+    args->start_query = round*round_size;
+    args->end_query = (round+1)*round_size-1;
     args->result = &exact_fast_result;
     args->threads = &round_threads;
     args->reference_order = &reference_order;
@@ -620,24 +652,29 @@ int main()
     pthread_t * main_thread = new pthread_t;
     round_threads.push_back(main_thread);
     pthread_mutex_init(args->push_mutex,0);
+    
     pthread_create( main_thread, NULL, parallel_binary_search, (void*)args);
+
     bool round_working = true;
     for(int t = 0; t<round_threads.size();t++)
     {
+        cout<<"started for "<<args->start_query<<" "<<args->end_query<<" to "<<t<<" "<<"from "<<round_threads.size()<<" "<<endl;
         pthread_join(*(round_threads[t]),NULL);
     }
-    int num_threads = round_threads.size();
+
+    num_threads = round_threads.size();
     for (int tn = 0; tn < round_threads.size();tn++)
     {
 
        delete round_threads[tn];
     }
+}
 
 runTime +=omp_get_wtime();
-
+cout<<"calculated";
 
 int score = 0;
-for (int q = 0 ;q <num_query_points;q++)
+for (int q = 0 ;q <200;q++)
 {
     vector<int> KNN_one_row_test =  KNN_one_row(&reference,&query,k,Euclidean,query_order[q]);
     int matches = 0;
