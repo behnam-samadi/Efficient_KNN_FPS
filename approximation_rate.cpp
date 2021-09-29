@@ -485,49 +485,20 @@ vector<int> result_1NN (num_query_points);
     // print_vector(sorted_indices);
     for (int q = 0; q<num_query_points;q++)
     {
-        cout<<endl<<q<<" from "<<num_query_points;
-        //cout<<endl<<q<<"from "<<num_query_points;
-        //int binary_search (vector<float>* reference, float query, int begin, int end)
-        //float calc_distance (vector<float> v1, vector<float> v2, string type);
         int nearest_index = binary_search(&sum_cordinates, sum_cordinates_query[q], 0, num_ref_points);
-        float euq_min_cut = calc_distance(query.data[q], reference.data[nearest_index], "Euclidean");
-        int start_bucket = nearest_index;
-        int end_bucket = nearest_index;
-        
-        while ((start_bucket>=0)&&(abs(sum_cordinates[start_bucket]- sum_cordinates_query[q]) <= euq_min_cut))
+        int start_knn = nearest_index;
+        int end_knn = nearest_index;
+        int dist = 0;
+        bool left_candidate;
+        bool right_candidate;
+        while((end_knn - start_knn + 1) < k)
         {
-            start_bucket--;
-        }
-        if (start_bucket<0) start_bucket++;
-
-
-        while ((end_bucket<num_ref_points)&&(abs(sum_cordinates[end_bucket]- sum_cordinates_query[q]) <= euq_min_cut))
-        {
-            end_bucket++;
-        }
-        if (end_bucket>=num_ref_points) end_bucket--;
-        /*
-        for (int c = start_bucket; c<=end_bucket;c++)
-        {
-            float dist = calc_distance(query.data[q], reference.data[sorted_indices[c]], "Euclidean");
-            if (dist < euq_min_cut)
+            if (start_knn>0) left_candidate = true;
+            if (end_knn<(num_ref_points-1)) right_candidate = true;
+            if (left_candidate == false)
             {
-                nearest_index = c;
-                euq_min_cut = dist;
+                
             }
-        }
-
-        result_1NN[q] = sorted_indices[nearest_index];
-        */
-        sum_prone_points+=(end_bucket - start_bucket+1);
-        //cout<<end_bucket - start_bucket + 1<<endl;
-        cout<<"bucket properties: "<<start_bucket<<" "<<nearest_index<<" "<<end_bucket<<endl;
-
-        //cout << typeid(query.data[0]).name() << endl;
-        
-
-        //cout<<endl<<euq_min_cut;
-        //exit(0);
     }   
     float avg_prone_points = sum_prone_points / num_query_points;
     float percent = 1-(avg_prone_points / num_ref_points);

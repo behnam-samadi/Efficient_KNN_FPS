@@ -8,6 +8,8 @@ int main()
 {
 	priority_queue<int> q;
 	priority_queue<pair<int, int>> pq;
+
+	pq.push(make_pair(10,200))
 	q.push(90);
 	q.push(91);
 	q.push(19);

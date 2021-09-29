@@ -591,7 +591,7 @@ int main()
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     int num_query_points_orig = num_query_points;
-    num_query_points = 512;
+    num_query_points = 6400;
     int round_size = 64;
     int round_num = num_query_points/round_size;
     double runTime = -omp_get_wtime();

@@ -15,6 +15,10 @@
 using namespace std;
 int num = 0;
 int num_exam = 0;
+
+
+
+
 enum dist_metric
 {
     Modified_Manhattan,
@@ -396,15 +400,15 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
 }
 
 
-vector<int> KNN_Exact(vector<float> query, int k)
+vector<int> KNN_Exact(vector<float> query, int k, vector<int>*result)
 {
     //int root_index = 0;
-    vector<int> result;
     priority_queue<pair<float, int>> result_queue;
     KNN_Exact_rec(query, k , &result_queue, 0,0);
+    int index = 0;
     while(result_queue.size())
     {
-        result.push_back(result_queue.top().second);
+        (*result)[index] = result_queue.top().second;
         result_queue.pop();
     }
     return result;
@@ -504,6 +508,14 @@ int downward_search(node * tree,int start_index, vector<float> query)
 
 
 
+};
+struct thread_data
+{
+    KD_Tree * tree;
+    vector<float> query;
+    vector<vector <int>> * result;
+    int query_index;
+    int k;
 };
 
 void print_vector (vector<bool> v){
@@ -606,54 +618,86 @@ return(result);
 }   
 */
 
+struct thread_data
+{
+    KD_Tree * tree;
+    vector<float> query;
+    vector <int> * result;
+    int k;
+};
+
+void * KNN_KD_Tree (void* data)
+{
+    thread_data * args = (*thread_data) data;
+    args->tree.KNN_Exact(args->query,args->k, args->result);
+}
 
 
 
 int main()
 {
-
 	int frame_channels = Points_Dim;
     Frame reference = read_data("0000000000.bin", Points_Dim+1, frame_channels);
-    Frame query = read_data("0000000000.bin", Points_Dim+1, frame_channels);
+    Frame query = read_data("0000000001.bin", Points_Dim+1, frame_channels);
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     int num_query_points_orig = num_query_points;
+    num_query_points = 6400;
+    int round_size = 64;
+    int round_num = num_query_points/round_size;
+    pthread_t* threads;
+    thread_data* data_for_threads;
+    KD_Tree reference_tree(&(reference.data));
+    int ** result = new int * [round_num];
+    int k = 50;
+    for (int round = 0 ; round < round_num; round++)
+    {
+        threads = new pthread_t[round_size];
+        data_for_threads = new thread_data[round_size];
+        result[round] = new int[round_size];
+        for (int t = 0 ; t < round_size; t++)
+        {
+            data_for_threads[t].tree = reference_tree;
+            data_for_threads[t].query = query.data[round*round_size + t];
+            data_for_threads[t].result = &(result[round]);
+            data_for_threads[t].k = k;
+            data_for_threads[t].query_index = round*round_size + t;
+        }
+        for (int t = 0 ; t<round_size;t++)
+        {
+            pthread_create(threads[t], NULL, KNN_KD_Tree, (void*)(&data_for_threads[t]));
+        }
+        for (int t = 0; t <round_size; t++)
+        {
+            pthread_join(&(threads[t]), NULL);
+        }
+
+
+
+
+
+
+        delete[] threads;
+        delete[] data_for_threads;
+
+
+    }
+
+
+
+
+
+
+
+
+/*
+
+
+
     int num_points = 12	;
     print_vector_float(reference.data[0]);
     
-    cout<<pow(2,ceil(log2(num_points)));
-    vector<vector<float>> test_points = {{2,3,7}, {4,-1,5}, {7,-1,0}, {0,0,0}, {1,2,6}, {0,5,-5}, {-2,7,9}, {5,0,0,}};
-    node_boundries test_boundry;
-    //test_boundry.limits = {{7,8}, {9,10}, {11,12}};
-    //test_boundry.is_set = {{0,0}, {0,0}, {0,0}};
-    test_boundry.limits = {{5,10}, {-19,-7}};
-    test_boundry.is_set = {{1,1}, {1,1}};
-
-    //cout<<endl<<cross_check_cirlce_square({7,-1}, test_boundry, 2)<<endl;
-    //exit(0);
-    //node * tree = Create_KD_Tree(&(test_points));
-    print_vector_float(reference.data[95961]);//0.5 0.5 0.5
-    //exit(0);
-    
-    double runTime = -omp_get_wtime();
-    KD_Tree test_tree(&(reference.data));
-    cout<<test_tree.tree[128727].branchpoint<<endl;
-    cout<<test_tree.tree[128727].dimension<<endl;
-    print_vector_2D(test_tree.tree[128727].boundries.limits);
-    print_vector_float(test_tree.tree[128727].point);
-    cout<<"64363"<<endl;
-    cout<<test_tree.tree[64363].branchpoint<<endl;
-    cout<<test_tree.tree[64363].dimension<<endl;
-    print_vector_2D(test_tree.tree[128727].boundries.limits);
-    print_vector_float(test_tree.tree[128727].point);
-    
-print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
-
-    //print_vector_int(test_tree.KNN_Exact({0.5, 0.5,0.5}, 20));
-    int k = 20;
-    vector<int> kd_result;
-    vector<int> correct_result;
-    int score = 0;
+ 
     print_vector_float(query.data[0]);
     print_vector_float(reference.data[0]);
     
@@ -731,6 +775,6 @@ print_vector_int(test_tree.KNN_Exact({76.994 , 8.302 ,2.828}, 20));
 
     
     //node * tree = Create_KD_Tree(&(reference.data));
-
+*/
 	return 0;
 }
