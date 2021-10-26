@@ -1,0 +1,30 @@
+num_threads
+1
+runTime:
+64308.000000
+
+
+num_threads
+2
+64215.000000
+
+num_threads
+4
+S(0):TimingTime=1700246.000000
+73512.000000
+
+
+
+num_thread
+16
+S(0):TimingTime=1226578.000000
+                1700246.000000
+                357353.000000
+
+
+
+
+
+/content/drive/MyDrive/trn_2/sample_videos/second_dataset/resturant/abnormal1.mp4
+/content/drive/MyDrive/trn_2/sample_videos/second_dataset/resturant/abnormal2.mp4
+/content/drive/MyDrive/trn_2/sample_videos/second_dataset/resturant/abnormal3.mp4
