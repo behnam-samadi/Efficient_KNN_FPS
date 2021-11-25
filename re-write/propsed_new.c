@@ -12,6 +12,7 @@
 #include <omp.h>
 #include <time.h>
 #define point_dim 3
+#define fix_round_size 512
 using namespace std;
 //todo: move num_calc_dis to function
 int num_calc_dis;
@@ -24,11 +25,10 @@ enum dist_metric
 };
 
 class Frame{
-    //todo: change to private
+    //later: change to private
 public:
-	//todo rename to row_data
-    vector<vector<float>> data;
-    vector<vector<float>> full_data;
+    vector<vector<float>> row_data;
+    
     Frame(string file_adress)
     {
     ifstream fin(file_adress);
@@ -49,12 +49,12 @@ public:
                 cout<<counter<<endl;
             }
             //cout<<stof(a1)<<" has been read"<<endl ;
-            data.push_back(vector<float>(point_dim));       
-            data[data.size()-1][0] = stof(a1);
+            row_data.push_back(vector<float>(point_dim));       
+            row_data[data.size()-1][0] = stof(a1);
             for (int c = 1 ;c<point_dim;c++)
             {
                 getline(fin, a1, ',');      
-                data[data.size()-1][c] = stof(a1);
+                row_data[data.size()-1][c] = stof(a1);
             }
         }
         else finished = true;
@@ -62,6 +62,7 @@ public:
     }
     }
 };
+
 
 
 void print_vector_float (vector<float> v){
@@ -568,14 +569,269 @@ void* parallel_binary_search(void * data_void)
     } while(state.left_size>1);
     if (state.left_size == 1)
         {
-            int nearest = binary_search(reference->data, (*query_projected)[start_query], start_reference, end_reference);
+            int nearest = binary_search((&reference->data), (*query_projected)[start_query], start_reference, end_reference);
             //cout<<endl<<"Line:555 : start_query: "<<start_query;
-            exact_knn_projected     (result                     ,reference         ,reference_projected                ,reference_order              ,query->data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,num_ref_points);    
+            exact_knn_projected     (result                     ,reference     ,query->data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,num_ref_points);    
         }
         delete data;
         
 }
 
+void print_vector_int (vector<int> v){
+    for (int i = 0 ; i< v.size();i++)
+    {
+        cout<<endl<<v[i]<<" ";
+    }
+    cout<<endl;
+}
+
+
+void print_vector_2D (vector<vector<int>>input){
+    for (int i = 0; i< input.size();i++)
+    {
+        for(int j = 0; j<input[0].size();j++)
+        {
+            cout<<input[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+}
+
+void print_vector_2D_float (vector<vector<float>>input){
+    for (int i = 0; i< input.size();i++)
+    {
+        for(int j = 0; j<input[0].size();j++)
+        {
+            cout<<input[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+}
+
 
 int main()
-{}
+{
+
+    int frame_channels = 3;
+    Frame reference("reformed_dataset/0_cut_20000.txt");
+    Frame query("reformed_dataset/0000000001_shuffle_cut.txt");
+    cout<<reference.data.size()<<endl;
+    cout<<query.data.size()<<endl;
+    print_vector_float(query.data[1]);
+    cout<<query.data.size();
+    
+
+    
+    int num_ref_points = reference.data.size();
+    
+    int num_query_points = query.data.size();
+    cout<<num_ref_points<<endl<<num_query_points<<endl;
+    
+    print_vector_float(query.data[0]);
+    
+    
+
+    int num_query_points_orig = num_query_points;
+    int round_size = fix_round_size;
+    int round_num = num_query_points/round_size;
+    
+    //vector<float> reference_projected(num_ref_points);
+    vector<float> query_projected(num_query_points);
+    
+    for (int i =0 ; i<num_ref_points;i++)
+    {
+        //cout<<i<<endl;
+        reference_projected[i] = 0;
+        for (int j = 0; j<reference.data[0].size();j++)
+        {
+        reference_projected[i] += reference.data[i][j];
+        }
+    }
+    /*
+    for (int i =0 ; i<num_query_points;i++)
+    {
+        query_projected[i] = 0;
+        for (int j = 0; j<query.data[0].size();j++)
+        {
+        query_projected[i] += query.data[i][j];
+        }
+    }
+
+
+    vector<int> reference_order(num_ref_points);
+    iota(reference_order.begin(),reference_order.end(),0);
+    sort( reference_order.begin(),reference_order.end(), [&](int i,int j){return reference_projected[i]<reference_projected[j];} );
+    sort( reference_projected.begin(),reference_projected.end());
+
+
+    vector<int> query_order(num_query_points);
+    iota(query_order.begin(),query_order.end(),0);
+
+
+
+    cout<<"sorting done!"<<endl;
+
+
+
+    int K_test = 50;
+    int num_temp_tets = 64;
+    vector<vector<int>> result_test  (num_temp_tets , vector<int> (K_test, 0));
+    int score = 0;
+    int num_calc_dis_test = 0;
+    double avg_test_time = 0;
+    double avg_ex_time = 0;
+    double test_time;
+    vector<int> KNN_one_row_test;
+    for (int q= 0 ; q< num_temp_tets;q++)
+    {
+        num_calc_dis = 0;
+        cout<<endl<<"test_number: "<<q<<endl;
+        test_time = -omp_get_wtime();
+        int nearest_index = binary_search (&reference_projected,query_projected[q], 0, num_ref_points);
+
+        exact_knn_projected(&result_test,&reference,&reference_projected,&reference_order,query.data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
+        test_time+=omp_get_wtime();
+        avg_test_time+= test_time;
+        num_calc_dis_test+=num_calc_dis;
+        cout<<num_calc_dis<<endl;
+        test_time=-omp_get_wtime();
+        KNN_one_row_test =  KNN_one_row(&reference,&query,K_test,Euclidean,query_order[q]);
+        test_time+=omp_get_wtime();
+        avg_ex_time+= test_time;
+        int matches = 0;
+        for (int j = 0; j < K_test; j++)
+        {
+            bool found = false;
+            for (int c = 0 ; c<K_test; c++)
+            {
+                if (result_test[q][j] == KNN_one_row_test[c])
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (found==true)
+                matches++;
+        }
+        
+        if (matches == K_test)
+            {score++;}
+        else
+            {cout<<"unsuceful sraech in "<<endl<<q<<endl;
+        cout<<endl<<"matches:"<<matches<<endl;
+
+print_vector_int(result_test[q]);
+        print_vector_int(KNN_one_row_test);
+        
+    }
+
+            
+
+
+        //inja
+
+    }
+    //print_vector_2D(result_test);
+    avg_test_time/= num_temp_tets;
+    avg_ex_time/= num_temp_tets;
+    cout<<endl<<" test done with score "<<score<<endl<<" rate of cutoff: "<<(num_calc_dis_test/num_temp_tets)/(float)(num_ref_points)<<endl<<"number of calculated distances: "<<num_calc_dis_test<<endl<<"average euc num: "<<num_calc_dis_test/num_temp_tets<<endl<<" num tests: "<<num_temp_tets<<endl<<"avg test time: "<<avg_test_time<<endl<<"avg_ex_time: "<<avg_ex_time<<endl<<"speedup: "<<avg_ex_time/avg_test_time<<endl<<" "<<1/((num_calc_dis_test/num_temp_tets)/(float)(num_ref_points)) <<endl;
+    exit(0);
+
+
+
+
+
+
+
+
+
+
+
+int k = 50;
+int num_threads;
+vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
+double runTime = -omp_get_wtime();
+    for (int round = 0 ; round < round_num; round++)
+    {
+    thread_data* args = new thread_data;
+    vector<pthread_t*> round_threads;
+    args->reference = &reference;
+    args->query = &query;
+    args->reference_projected = &reference_projected;
+    args->k = k;
+    args->query_order = &query_order;
+    args->query_projected = &query_projected;
+    args->start_reference = 0;
+    args->end_reference = num_ref_points-1;
+    args->num_ref_points = num_ref_points;
+    args->start_query = round*round_size;
+    args->end_query = (round+1)*round_size-1;
+    args->result = &exact_fast_result;
+    args->threads = &round_threads;
+    args->reference_order = &reference_order;
+    args->push_mutex = new pthread_mutex_t;
+    pthread_t * main_thread = new pthread_t;
+    round_threads.push_back(main_thread);
+    pthread_mutex_init(args->push_mutex,0);
+    
+    pthread_create( main_thread, NULL, parallel_binary_search, (void*)args);
+
+    bool round_working = true;
+    for(int t = 0; t<round_threads.size();t++)
+    {
+        //cout<<"started for "<<args->start_query<<" "<<args->end_query<<" to "<<t<<" "<<"from "<<round_threads.size()<<" "<<endl;
+        pthread_join(*(round_threads[t]),NULL);
+    }
+
+    num_threads = round_threads.size();
+    for (int tn = 0; tn < round_threads.size();tn++)
+    {
+
+       delete round_threads[tn];
+    }
+}
+runTime +=omp_get_wtime();
+cout<<endl<<runTime<<endl;
+exit(0);
+
+
+cout<<"calculation time: "<<runTime<<endl<<"Do you want to perform an accuracy check? (1or0)"<<endl;
+bool cont;
+cin>>cont;
+if(cont)
+{
+
+int score = 0;
+for (int q = 0 ;q <num_query_points;q++)
+{
+    cout<<endl<<"test number: "<<q<<" from "<<num_query_points;
+    vector<int> KNN_one_row_test =  KNN_one_row(&reference,&query,k,Euclidean,query_order[q]);
+    int matches = 0;
+    for (int j = 0; j < k; j++)
+    {
+        bool found = false;
+        for (int c = 0 ; c<k; c++)
+        {
+            if (exact_fast_result[q][j] == KNN_one_row_test[c])
+            {
+                found = true;
+                break;
+            }
+        }
+        if (found==true)
+            matches++;
+    }
+    
+    if (matches == k)
+        score++;
+}
+cout<<endl;
+cout<<"Number of Query Points:         "<<num_query_points<<endl;
+cout<<"Number of Nearest Neighbors (K):"<<k<<endl;
+cout<<"Number of Correct Answers:      "<<score<<endl;
+cout<<"Execution Time:                 "<<runTime<<endl;
+cout<<"Number of Threads Created in Last Round:      "<<num_threads<<endl;
+}*/
+}
