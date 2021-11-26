@@ -100,7 +100,7 @@ void print_vector_float (vector<float> v){
 }
 
 
-float calc_distance (float *v1, float * v2, dist_metric type)
+float calc_distance (float *v1, vector<float>v2, dist_metric type)
 {
     //cout<<"distance of ";
     //print_vector_float(v1);
@@ -161,7 +161,7 @@ vector<int> KNN_one_row (Frame * reference, Frame * query, int K,dist_metric met
         //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
-            distance[j] = calc_distance((*query).data[i], (*reference).data[j], metric);
+            distance[j] = calc_distance((*reference).data[j], query->row_data[i], metric);
 
         }
         vector<int> topk = topK(distance, K);
@@ -402,7 +402,7 @@ spliting_result binary_search_split_(vector<vector<float>> *input, int start_ind
 
 
 
-void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,float*query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
+void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
 {
     cout<<"exact search is called for "<<query_projected<<" "<<nearest_index<<endl;
     int start_knn = nearest_index;
@@ -456,6 +456,7 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,floa
     while( abs( reference->data[right_arrow][point_dim] - query_projected ) <= (sqrt(3)*max_dist)    )
     {
         dist = calc_distance(reference->data[right_arrow], query, Euclidean);
+
         num_calc_dis++;
         calculated_distances_num++;
         if (dist < max_dist)
@@ -507,7 +508,7 @@ spliting_state one_step_parallel_binary_search(vector<float>* query_projected,in
     int divider2 = split.divider2;
     for(int d = divider1; d< divider2;d++)
     {        
-     exact_knn_projected     (result,reference,query->data[(*query_order)[d]],(*query_projected)[d],middle_index, k,d,num_ref_points);    
+     exact_knn_projected     (result,reference,query->row_data[(*query_order)[d]],(*query_projected)[d],middle_index, k,d,num_ref_points);    
 
     }
 
@@ -551,7 +552,7 @@ void* parallel_binary_search(void * data_void)
             int nearest = binary_search((reference->data), (*query_projected)[q], start_reference, end_reference);
             //int binary_search (vector<vector<float>>* reference, float query, int begin, int end)
             //cout<<endl<<"Line:508 : q: "<<q;
-         exact_knn_projected     (result                     ,reference,query->data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,num_ref_points);       
+         exact_knn_projected     (result                     ,reference,query->row_data[(*query_order)[q]],(*query_projected)[q],nearest, k,q,num_ref_points);       
          //void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
         }
         delete data;
@@ -599,7 +600,7 @@ void* parallel_binary_search(void * data_void)
         {
             int nearest = binary_search((reference->data), (*query_projected)[start_query], start_reference, end_reference);
             //cout<<endl<<"Line:555 : start_query: "<<start_query;
-            exact_knn_projected     (result                     ,reference     ,query->data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,num_ref_points);    
+            exact_knn_projected     (result                     ,reference     ,query->row_data[(*query_order)[start_query]],(*query_projected)[start_query],nearest, k,start_query,num_ref_points);    
         }
         delete data;
         
@@ -742,7 +743,7 @@ cout<<"inja:";
         test_time = -omp_get_wtime();
         int nearest_index = binary_search (reference.data,query_projected[q], 0, num_ref_points);
 
-        exact_knn_projected(&result_test,&reference,query.data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
+        exact_knn_projected(&result_test,&reference,query.row_data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
         //void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,float*query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
         test_time+=omp_get_wtime();
         avg_test_time+= test_time;
