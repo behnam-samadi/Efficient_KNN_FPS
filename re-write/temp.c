@@ -17,7 +17,7 @@
 #define point_dim 3
 using namespace std;
 
-
+//pengoolamator
 int num_calc_dis;
 enum dist_metric
 {

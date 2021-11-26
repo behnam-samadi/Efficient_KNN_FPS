@@ -81,7 +81,11 @@ void print_float_2d (float ** v, int X, int Y){
     for (int i = 0 ; i< X;i++)
     {
         for (int j = 0 ; j < Y ; j++)
-        cout<<endl<<v[X][Y]<<" ";
+        {
+
+        cout<<v[i][j]<<" ";
+    }
+    cout<<endl;
     }
     cout<<endl;
 }
@@ -400,6 +404,7 @@ spliting_result binary_search_split_(vector<vector<float>> *input, int start_ind
 
 void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,float*query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
 {
+    cout<<"exact search is called for "<<query_projected<<" "<<nearest_index<<endl;
     int start_knn = nearest_index;
     int end_knn = nearest_index;
     while((end_knn - start_knn + 1) < K)
@@ -441,6 +446,7 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,floa
             max_dist = dist;
         }
     }
+    cout<<" start_knn: "<<start_knn<<" end_knn: "<<end_knn<<endl;
     int right_arrow = end_knn+1;
     int left_arrow = start_knn-1;
     max_dist = knn.top().first;
@@ -662,9 +668,11 @@ int main()
         reference_projected[i] = 0;
         for (int j = 0; j<point_dim;j++)
         {
-        reference_projected[i] += reference.data[i][j];
+        reference_projected[i] += reference.row_data[i][j];
         }
     }
+    //print_vector_float(reference_projected);
+    
     vector<int> reference_order(num_ref_points);
     iota(reference_order.begin(),reference_order.end(),0); //Initializing
     sort( reference_order.begin(),reference_order.end(), [&](int i,int j){return reference_projected[i]<reference_projected[j];} );
@@ -676,10 +684,12 @@ int main()
         for (int j = 0; j<point_dim;j++)
         {
             reference.data[i][j] = reference.row_data[reference_order[i]][j];
-            //cout<<"transfomration for "<<i<<" "<<j<<"'th is done"<<endl;
+    //        if (i < 90)cout<<"transfomration for "<<i<<" "<<j<<"'th is changed to "<<reference.row_data[reference_order[i]][j]<<endl;
             sum += reference.data[i][j];
         }
         reference.data[i][point_dim] = sum;
+        //reference.data[i][point_dim] = reference_projected[i];
+    //    if (i<90) cout<<"and sum is "<<reference.data[i][point_dim]<<endl;
     }
     
     for (int i =0 ; i<num_query_points;i++)
@@ -687,16 +697,21 @@ int main()
         query_projected[i] = 0;
         for (int j = 0; j<point_dim;j++)
         {
-        query_projected[i] += query.data[i][j];
+        query_projected[i] += query.row_data[i][j];
         }
     }
 cout<<"inja:";
+
     cout<<endl;
-    
+
+
     
     cout<<reference.data[0][0];
 
+
     print_float_2d(reference.data, reference.num_points, point_dim+1);
+    
+    
     //cout<<"projection done!"<<endl;
 
     
@@ -709,7 +724,7 @@ cout<<"inja:";
 
 
 
-/*
+
     int K_test = 50;
     int num_temp_tets = 64;
     vector<vector<int>> result_test  (num_temp_tets , vector<int> (K_test, 0));
@@ -721,16 +736,18 @@ cout<<"inja:";
     vector<int> KNN_one_row_test;
     for (int q= 0 ; q< num_temp_tets;q++)
     {
+        cout<<q<<endl;
         num_calc_dis = 0;
         cout<<endl<<"test_number: "<<q<<endl;
         test_time = -omp_get_wtime();
-        int nearest_index = binary_search (&reference_projected,query_projected[q], 0, num_ref_points);
+        int nearest_index = binary_search (reference.data,query_projected[q], 0, num_ref_points);
 
-        exact_knn_projected(&result_test,&reference,&reference_projected,&reference_order,query.data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
+        exact_knn_projected(&result_test,&reference,query.data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
+        //void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,float*query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
         test_time+=omp_get_wtime();
         avg_test_time+= test_time;
         num_calc_dis_test+=num_calc_dis;
-        cout<<num_calc_dis<<endl;
+        //cout<<num_calc_dis<<endl;
         test_time=-omp_get_wtime();
         KNN_one_row_test =  KNN_one_row(&reference,&query,K_test,Euclidean,query_order[q]);
         test_time+=omp_get_wtime();
@@ -756,9 +773,11 @@ cout<<"inja:";
         else
             {cout<<"unsuceful sraech in "<<endl<<q<<endl;
         cout<<endl<<"matches:"<<matches<<endl;
-
-print_vector_int(result_test[q]);
-        print_vector_int(KNN_one_row_test);
+//cout<<"-----------------------------------------------result:"<<endl;
+//print_vector_int(result_test[q]);
+//cout<<"-----------------------------------------------exact:"<<endl;
+        //print_vector_int(KNN_one_row_test);
+        //cout<<"-----------------------------------------------"<<endl;
         
     }
 
@@ -772,12 +791,12 @@ print_vector_int(result_test[q]);
     avg_test_time/= num_temp_tets;
     avg_ex_time/= num_temp_tets;
     cout<<endl<<" test done with score "<<score<<endl<<" rate of cutoff: "<<(num_calc_dis_test/num_temp_tets)/(float)(num_ref_points)<<endl<<"number of calculated distances: "<<num_calc_dis_test<<endl<<"average euc num: "<<num_calc_dis_test/num_temp_tets<<endl<<" num tests: "<<num_temp_tets<<endl<<"avg test time: "<<avg_test_time<<endl<<"avg_ex_time: "<<avg_ex_time<<endl<<"speedup: "<<avg_ex_time/avg_test_time<<endl<<" "<<1/((num_calc_dis_test/num_temp_tets)/(float)(num_ref_points)) <<endl;
-    exit(0);
+    
 
 
 
+exit(0);
 
-/*
 
 
 
@@ -794,7 +813,7 @@ double runTime = -omp_get_wtime();
     vector<pthread_t*> round_threads;
     args->reference = &reference;
     args->query = &query;
-    args->reference_projected = &reference_projected;
+    //args->reference_projected = &reference_projected;
     args->k = k;
     args->query_order = &query_order;
     args->query_projected = &query_projected;
@@ -805,7 +824,7 @@ double runTime = -omp_get_wtime();
     args->end_query = (round+1)*round_size-1;
     args->result = &exact_fast_result;
     args->threads = &round_threads;
-    args->reference_order = &reference_order;
+    //args->reference_order = &reference_order;
     args->push_mutex = new pthread_mutex_t;
     pthread_t * main_thread = new pthread_t;
     round_threads.push_back(main_thread);
@@ -829,7 +848,7 @@ double runTime = -omp_get_wtime();
 }
 runTime +=omp_get_wtime();
 cout<<endl<<runTime<<endl;
-exit(0);
+
 
 
 cout<<"calculation time: "<<runTime<<endl<<"Do you want to perform an accuracy check? (1or0)"<<endl;
@@ -868,5 +887,5 @@ cout<<"Number of Nearest Neighbors (K):"<<k<<endl;
 cout<<"Number of Correct Answers:      "<<score<<endl;
 cout<<"Execution Time:                 "<<runTime<<endl;
 cout<<"Number of Threads Created in Last Round:      "<<num_threads<<endl;
-}*/
+}
 }
