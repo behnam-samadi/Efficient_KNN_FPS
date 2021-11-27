@@ -12,7 +12,7 @@
 #include <omp.h>
 #include <time.h>
 #define point_dim 3
-#define fix_round_size 512
+#define fix_round_size 64
 using namespace std;
 //todo: move num_calc_dis to function
 int num_calc_dis;
@@ -404,7 +404,7 @@ spliting_result binary_search_split_(vector<vector<float>> *input, int start_ind
 
 void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
 {
-    cout<<"exact search is called for "<<query_projected<<" "<<nearest_index<<endl;
+    
     int start_knn = nearest_index;
     int end_knn = nearest_index;
     while((end_knn - start_knn + 1) < K)
@@ -446,7 +446,7 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
             max_dist = dist;
         }
     }
-    cout<<" start_knn: "<<start_knn<<" end_knn: "<<end_knn<<endl;
+    //cout<<" start_knn: "<<start_knn<<" end_knn: "<<end_knn<<endl;
     int right_arrow = end_knn+1;
     int left_arrow = start_knn-1;
     max_dist = knn.top().first;
@@ -525,6 +525,7 @@ spliting_state one_step_parallel_binary_search(vector<float>* query_projected,in
 
 void* parallel_binary_search(void * data_void)
 {
+    
     
 
     thread_data* data = (thread_data*)(data_void);
@@ -659,6 +660,8 @@ int main()
     int num_query_points_orig = num_query_points;
     int round_size = fix_round_size;
     int round_num = num_query_points/round_size;
+    cout<<endl<<"round_num :"<<round_num<<" "<<num_query_points;
+    
     
        vector<float> reference_projected(num_ref_points);
     vector<float> query_projected(num_query_points);
@@ -796,7 +799,7 @@ cout<<"inja:";
 
 
 
-exit(0);
+
 
 
 
@@ -850,6 +853,8 @@ double runTime = -omp_get_wtime();
 runTime +=omp_get_wtime();
 cout<<endl<<runTime<<endl;
 
+cout<<endl<<"---------------final result-----------"<<endl;
+//print_vector_2D(exact_fast_result);
 
 
 cout<<"calculation time: "<<runTime<<endl<<"Do you want to perform an accuracy check? (1or0)"<<endl;
