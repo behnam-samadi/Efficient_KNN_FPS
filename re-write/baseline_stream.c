@@ -13,8 +13,8 @@
 #include <time.h>
 #define Points_Dim 3
 #define point_dim 3
-#define num_threads 64
-#define test_size 640
+#define num_threads 4
+#define test_size 64
 
 using namespace std;
 
@@ -561,15 +561,18 @@ void * thread_function (void* data)
     thread_data * args = (thread_data*)(data);
     vector<float> * query;
     int todo;
-    
+    bool cont = true;
+    while(cont)
+    {
     pthread_mutex_lock(args->mutex);
     //cout<<"mutex "<<args->mutex<<" locked "<<endl;
     cout<<"thread started "<< *(args->last_job)<<endl;
+    cout<<*(args->last_job) <<" "<< args->max_job<<endl;
     if (*(args->last_job) == args->max_job)
     {
-        cout<<"finished thread"<<*(args->last_job)<<endl;
         pthread_mutex_unlock((args->mutex));
-        return NULL;
+        cont = false;
+        break;
     }
     else
     {
@@ -579,6 +582,8 @@ void * thread_function (void* data)
     }
     pthread_mutex_unlock(args->mutex);
     args->reference->KNN_Exact(query,args->k, args->result[todo]);   
+    cout<<"cont: "<<cont<<endl;
+}
     return NULL;
 }
 
@@ -617,5 +622,18 @@ int main()
         {
             pthread_join(threads[t], NULL);
         }
-
+        
+vector<int> correct_result;
+    for (int i = 0 ; i<test_size;i++)
+    {
+    correct_result =  KNN_one_row (&reference, &query, k,Euclidean, i);
+    for (int j = 0 ; j < k ; j++)
+    {
+        cout<<result[i][j]<<" ";
+    }
+    cout<<endl;
+    print_vector_int(correct_result);
 }
+}
+
+
