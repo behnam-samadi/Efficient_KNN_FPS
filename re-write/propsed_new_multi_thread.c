@@ -560,6 +560,7 @@ void* parallel_binary_search(void * data_void)
         return NULL;
     }
     state = one_step_parallel_binary_search(query_projected , start_reference, end_reference , start_query, end_query, result, reference, query, query_order, k, num_ref_points);
+    cout<<" state left: "<<state.left_size<<" state right size: "<<state.right_size<<" "<<end_reference<<" "<<start_reference<<endl;
     middle_index = state.middle_index;
         if(state.right_size > 0)
         {
@@ -694,7 +695,6 @@ int main()
 int k = 50;
 int num_threads;
 vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
-double runTime = -omp_get_wtime();
     for (int round = 0 ; round < round_num; round++)
     {
     thread_data* args = new thread_data;
@@ -723,7 +723,6 @@ double runTime = -omp_get_wtime();
     {
         pthread_join(*(round_threads[t]),NULL);
     }
-
     num_threads = round_threads.size();
     for (int tn = 0; tn < round_threads.size();tn++)
     {
@@ -731,7 +730,7 @@ double runTime = -omp_get_wtime();
        delete round_threads[tn];
     }
 }
-runTime +=omp_get_wtime();
+exit(0);
 
 bool cont;
 cont = true;
@@ -762,6 +761,6 @@ for (int q = 0 ;q <num_query_points;q++)
     if (matches == k)
         score++;
 }
-cout<<score<<" "<<num_threads<<" "<<runTime;
+cout<<score<<" "<<num_threads<<" ";
 }
 }
