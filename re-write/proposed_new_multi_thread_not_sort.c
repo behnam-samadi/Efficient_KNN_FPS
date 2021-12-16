@@ -16,6 +16,7 @@
 using namespace std;
 //todo: move num_calc_dis to function
 int num_calc_dis;
+ofstream output_write("trace.txt");
 
 enum dist_metric
 {
@@ -369,104 +370,15 @@ int c = 0;
     cout<<"num calc: "<<calculated_distances_num<<" ";
 }
 
-
-
-void* parallel_binary_search(void * data_void)
-{
-    cout<<"parallel_binary_search is called for"<<endl;
-    print_vector_int(*job_list);
-    thread_data* data = (thread_data*)(data_void);
-    Frame * reference = data->reference;
-    Frame * query = data->query;
-    vector<float> * query_projected = data->query_projected;
-    vector<float> * reference_projected = data->reference_projected;
-    int k = data->k;
-    int start_reference = data->start_reference;
-    int end_reference = data->end_reference;
-    int num_ref_points = data->num_ref_points;
-    vector<int> * job_list = data->job_list;
-    pthread_mutex_t* push_mutex = data->push_mutex;
-    vector<vector<int>>* result = data->result;
-    vector<pthread_t*>* threads = data->threads;
-    int middle_index = (start_reference +end_reference)/2;
-    int task_size = job_list->size();
-    vector <int> * left_list;
-    vector <int>* right_list;
-    vector <int>* equal_list;
-    while(task_size>0)
-    {
-        left_list = new vector<int>();
-        right_list = new vector<int>();
-        for (int query_point = 0 ; query_point<task_size; query_point++)
-        {
-            if (query_projected[(*job_list)[query_point]] < reference_projected[middle_index])
-                left_list->push_back((*job_list)[query_point]);
-            else if (query_projected[(*job_list)[query_point]] > reference_projected[middle_index])
-            {
-                right_list->push_back((*job_list)[query_point]);
-            }
-            else
-            { 
-                equal_list->push_back((*job_list)[query_point]);
-            }
-        }
-        delete [] job_list;
-        if (right_list->size() > 0)
-        {
-            pthread_t* temp = new pthread_t;           
-            pthread_mutex_lock(push_mutex);
-            threads->push_back(temp);
-            pthread_mutex_unlock(push_mutex);
-            thread_data* args = new thread_data;
-            args->reference = reference;
-            args->query_projected = query_projected;
-            args->query = query;
-            args->k = k;
-            args->start_reference = middle_index+1;
-            args->end_reference = end_reference;
-            args->job_list = right_list;
-            args->num_ref_points = num_ref_points;
-            args->result = result;
-            args->threads = threads;
-            args->push_mutex = push_mutex;
-            pthread_create(temp, NULL, parallel_binary_search, (void*)args);
-        }
-        if (equal_list->size() > 0)
-        {
-            for (int eq = 0 ; eq < equal_list->size(); eq++)
-            {
-            int nearest = binary_search((reference->data), (*query_projected)[(*equal_list)[eq]], start_reference, end_reference);
-            exact_knn_projected     (result                     ,reference     ,query->row_data[(*equal_list)[eq]],(*query_projected)[(*equal_list)[eq]],nearest, k, (*equal_list)[eq],num_ref_points);    
-            //void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
-
-        }
-        if (left_list->size() > 0)
-        {
-            if (left_list->size() == 1)
-            {
-                int nearest = binary_search((reference->data), (*query_projected)[(*left_list)[0]], start_reference, end_reference);
-                exact_knn_projected     (result                     ,reference     ,query->row_data[(*left_list)[0]],(*query_projected)[(*left_list)[0]],nearest, k,(*left_list)[0],num_ref_points);    
-            }
-            else
-            {
-                job_list = left_list;
-                task_size = (*job_list).size();
-            }
-        }
-    }
-    
-        
-}
-}
-
 void print_vector_int (vector<int> v){
     for (int i = 0 ; i< v.size();i++)
     {
         cout<<endl<<v[i]<<" ";
+        output_write<<endl<<v[i]<<" ";
     }
     cout<<endl;
-}
 
+}
 
 void print_vector_2D (vector<vector<int>>input){
     for (int i = 0; i< input.size();i++)
@@ -479,6 +391,145 @@ void print_vector_2D (vector<vector<int>>input){
     }
 
 }
+
+void* parallel_binary_search(void * data_void)
+{
+    
+    thread_data* data = (thread_data*)(data_void);
+    Frame * reference = data->reference;
+    Frame * query = data->query;
+    vector<float> * query_projected = data->query_projected;
+    //vector<float> * reference_projected = data->reference_projected;
+    int k = data->k;
+    int start_reference = data->start_reference;
+    int end_reference = data->end_reference;
+    int num_ref_points = data->num_ref_points;
+    vector<int> * job_list = data->job_list;
+    /*if (job_list->size() < 64)
+    {
+    cout<<"parallel_binary_search is called for"<<endl;
+    cout<<"job_list "<<job_list->size();
+    
+    exit(0);
+}*/
+    pthread_mutex_t* push_mutex = data->push_mutex;
+    vector<vector<int>>* result = data->result;
+    vector<pthread_t*>* threads = data->threads;
+    int task_size = job_list->size();
+    int middle_index;
+    print_vector_float((*query_projected));
+    exit(0);
+    vector <int> * left_list;
+    vector <int>* right_list;
+    vector <int>* equal_list;
+    //cout<<endl<<start_reference<<endl<<end_reference<<endl;
+
+    while(task_size>0)
+    {
+        middle_index = (start_reference +end_reference)/2;
+        output_write<<"function called for: inja:"<<endl;
+        print_vector_int(*job_list);
+        left_list = new vector<int>();
+        right_list = new vector<int>();
+        equal_list = new vector<int>();
+        for (int query_point = 0 ; query_point<task_size; query_point++)
+        {
+            //cout<<"in: "<<endl<<(*job_list)[query_point]<<endl;
+            //cout<<"query_point: "<<query_point<<endl;
+            
+            if ((*query_projected)[(*job_list)[query_point]] < reference->data[middle_index][point_dim])
+            {
+                left_list->push_back((*job_list)[query_point]);
+                //cout<<"added to left_list"<<endl;
+            }
+            else if ((*query_projected)[(*job_list)[query_point]] > reference->data[middle_index][point_dim])
+            {
+                right_list->push_back((*job_list)[query_point]);
+                //cout<<"added to right_list"<<endl;
+            }
+            else
+            { 
+                equal_list->push_back((*job_list)[query_point]);
+                //cout<<"added to  equal_list"<<endl;
+            }
+        }
+        //cout<<"left_list:"<<endl;
+        //print_vector_int(*left_list);
+        //cout<<"right_list"<< endl;
+        //print_vector_int(*right_list);
+//        cout<<endl<<"equal_list"<<equal_list->size()<< endl;
+        //print_vector_int(*equal_list);
+        //cout<<left_list->size()<<" "<<right_list->size()<<" "<<equal_list->size()<<endl;
+        
+        delete  job_list;
+        
+        if (right_list->size() > 0)
+        {
+//            cout<<endl<<"oomad ke besaze"<<endl;
+            
+
+
+            pthread_t* temp = new pthread_t;           
+            pthread_mutex_lock(push_mutex);
+            threads->push_back(temp);
+            pthread_mutex_unlock(push_mutex);
+            thread_data* args = new thread_data;
+            args->reference = reference;
+            args->query_projected = query_projected;
+            args->query = query;
+            args->k = k;
+            args->start_reference = middle_index+1;
+            args->end_reference = end_reference;
+//            cout<<"chizi ke ferestade shod: "<<right_list<<endl;
+            args->job_list = right_list;
+            args->num_ref_points = num_ref_points;
+            args->result = result;
+            args->threads = threads;
+            args->push_mutex = push_mutex;
+            pthread_create(temp, NULL, parallel_binary_search, (void*)args);
+//            cout<<endl<<"eauxilary thread cretaed "<<endl;
+            
+        }
+        if (equal_list->size() > 0)
+        {
+            
+            for (int eq = 0 ; eq < equal_list->size(); eq++)
+            {
+            int nearest = binary_search((reference->data), (*query_projected)[(*equal_list)[eq]], start_reference, end_reference);
+            exact_knn_projected     (result                     ,reference     ,query->row_data[(*equal_list)[eq]],(*query_projected)[(*equal_list)[eq]],nearest, k, (*equal_list)[eq],num_ref_points);    
+            //void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
+
+        }
+    }
+        if (left_list->size() > 0)
+        {
+//            cout<<"left_list.size() is positive";
+            if (left_list->size() == 1)
+            {
+                int nearest = binary_search((reference->data), (*query_projected)[(*left_list)[0]], start_reference, end_reference);
+                cout<<"nearest: "<<nearest<<endl;
+                exact_knn_projected     (result                     ,reference     ,query->row_data[(*left_list)[0]],(*query_projected)[(*left_list)[0]],nearest, k,(*left_list)[0],num_ref_points);    
+                cout<<"result: "<<endl;
+                print_vector_2D(*result);
+                cout<<"anjma shod"<<endl;
+            }
+            else
+            {
+                job_list = left_list;
+                task_size = (*job_list).size();
+                end_reference = middle_index+1;
+            }
+        }
+    }
+    
+        
+}
+
+
+
+
+
+
 
 void print_vector_2D_float (vector<vector<float>>input){
     for (int i = 0; i< input.size();i++)
@@ -542,6 +593,7 @@ int main()
     iota(query_order.begin(),query_order.end(),0); //Initializing
     //sort( query_order.begin(),query_order.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
     //sort( query_projected.begin(),query_projected.end());
+//print_vector_float(reference_projected);
 
 int k = 50;
 int num_threads;
