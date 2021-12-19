@@ -367,7 +367,7 @@ int c = 0;
         //cout<<endl<<"row "<<row<<"col "<<c-1<<"changed";
         knn.pop();
     }
-    cout<<"num calc: "<<calculated_distances_num<<" ";
+    //cout<<"num calc: "<<calculated_distances_num<<" ";
 }
 
 void print_vector_int (vector<int> v){
@@ -394,81 +394,92 @@ void print_vector_2D (vector<vector<int>>input){
 
 void* parallel_binary_search(void * data_void)
 {
-    
     thread_data* data = (thread_data*)(data_void);
     Frame * reference = data->reference;
     Frame * query = data->query;
     vector<float> * query_projected = data->query_projected;
-    //vector<float> * reference_projected = data->reference_projected;
     int k = data->k;
     int start_reference = data->start_reference;
     int end_reference = data->end_reference;
     int num_ref_points = data->num_ref_points;
     vector<int> * job_list = data->job_list;
-    /*if (job_list->size() < 64)
-    {
-    cout<<"parallel_binary_search is called for"<<endl;
-    cout<<"job_list "<<job_list->size();
-    
-    exit(0);
-}*/
     pthread_mutex_t* push_mutex = data->push_mutex;
     vector<vector<int>>* result = data->result;
-    vector<pthread_t*>* threads = data->threads;
+    vector<pthread_t*>* threads = data->threads;    
     int task_size = job_list->size();
     int middle_index;
-    print_vector_float((*query_projected));
-    exit(0);
     vector <int> * left_list;
     vector <int>* right_list;
     vector <int>* equal_list;
-    //cout<<endl<<start_reference<<endl<<end_reference<<endl;
 
     while(task_size>0)
     {
+                //pthread_mutex_lock(push_mutex);
+        //print_vector_int((*job_list));
+              //pthread_mutex_unlock(push_mutex);
+        if ((end_reference - start_reference)<3)
+        {
+            for (int query_point = 0 ; query_point < job_list->size();query_point++)
+            {
+            int nearest = binary_search((reference->data), (*query_projected)[(*job_list)[query_point]], start_reference, end_reference);
+            exact_knn_projected     (result                     ,reference     ,query->row_data[(*job_list)[query_point]],(*query_projected)[(*job_list)[query_point]],nearest, k, (*job_list)[query_point],num_ref_points);    
+            delete job_list;
+            return(NULL);
+            }
+        }
+//        pthread_mutex_lock(push_mutex);
+ //       cout<<"from to : "<<start_reference<<" - "<<end_reference<<endl;
+  //      pthread_mutex_unlock(push_mutex);
+        
+        //cout<<"from to : "<<start_reference<<" - "<<end_reference<<endl;            
+        //print_vector_int(*job_list);
+        //cout<<endl;
+        
         middle_index = (start_reference +end_reference)/2;
-        output_write<<"function called for: inja:"<<endl;
-        print_vector_int(*job_list);
+        //pthread_mutex_lock(push_mutex);
+        //cout<<"middle_index: "<<middle_index<<endl;
+        //print_vector_int((*job_list));
+        //cout<<endl;
+        //pthread_mutex_unlock(push_mutex);
+        //cout<<"a thread is working with:(";
+        //print_vector_int(*job_list);
+        cout<<" ";
         left_list = new vector<int>();
         right_list = new vector<int>();
         equal_list = new vector<int>();
         for (int query_point = 0 ; query_point<task_size; query_point++)
-        {
-            //cout<<"in: "<<endl<<(*job_list)[query_point]<<endl;
-            //cout<<"query_point: "<<query_point<<endl;
-            
+        {            
             if ((*query_projected)[(*job_list)[query_point]] < reference->data[middle_index][point_dim])
             {
                 left_list->push_back((*job_list)[query_point]);
-                //cout<<"added to left_list"<<endl;
             }
             else if ((*query_projected)[(*job_list)[query_point]] > reference->data[middle_index][point_dim])
             {
                 right_list->push_back((*job_list)[query_point]);
-                //cout<<"added to right_list"<<endl;
             }
             else
             { 
-                equal_list->push_back((*job_list)[query_point]);
-                //cout<<"added to  equal_list"<<endl;
+             equal_list->push_back((*job_list)[query_point]);
             }
         }
-        //cout<<"left_list:"<<endl;
-        //print_vector_int(*left_list);
-        //cout<<"right_list"<< endl;
-        //print_vector_int(*right_list);
-//        cout<<endl<<"equal_list"<<equal_list->size()<< endl;
-        //print_vector_int(*equal_list);
-        //cout<<left_list->size()<<" "<<right_list->size()<<" "<<equal_list->size()<<endl;
-        
+        //pthread_mutex_lock(push_mutex);
+        //cout<<"middle_index "<<middle_index<<endl;
+        //cout<<"start:"<<endl<<"left:"<<endl;
+        //print_vector_int((*left_list));
+        //cout<<"right"<<endl;
+        //print_vector_int((*right_list));
+        //cout<<"equal"<<endl;
+        //print_vector_int((*equal_list));
+        //cout<<"printed----------------------------------------"<<endl;
+
+        //pthread_mutex_unlock(push_mutex);
+
         delete  job_list;
         
         if (right_list->size() > 0)
         {
-//            cout<<endl<<"oomad ke besaze"<<endl;
-            
-
-
+            //cout<<"a thread is creatign for with:(";
+            //print_vector_int(*right_list);
             pthread_t* temp = new pthread_t;           
             pthread_mutex_lock(push_mutex);
             threads->push_back(temp);
@@ -480,45 +491,57 @@ void* parallel_binary_search(void * data_void)
             args->k = k;
             args->start_reference = middle_index+1;
             args->end_reference = end_reference;
-//            cout<<"chizi ke ferestade shod: "<<right_list<<endl;
             args->job_list = right_list;
             args->num_ref_points = num_ref_points;
             args->result = result;
             args->threads = threads;
             args->push_mutex = push_mutex;
             pthread_create(temp, NULL, parallel_binary_search, (void*)args);
-//            cout<<endl<<"eauxilary thread cretaed "<<endl;
-            
         }
         if (equal_list->size() > 0)
         {
+
             
             for (int eq = 0 ; eq < equal_list->size(); eq++)
             {
             int nearest = binary_search((reference->data), (*query_projected)[(*equal_list)[eq]], start_reference, end_reference);
+            
             exact_knn_projected     (result                     ,reference     ,query->row_data[(*equal_list)[eq]],(*query_projected)[(*equal_list)[eq]],nearest, k, (*equal_list)[eq],num_ref_points);    
+            
             //void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
-
+            
+            
+            //delete equal_list;
         }
     }
         if (left_list->size() > 0)
         {
-//            cout<<"left_list.size() is positive";
             if (left_list->size() == 1)
             {
+                //cout<<"finished result for";
+                //print_vector_int((*left_list));
                 int nearest = binary_search((reference->data), (*query_projected)[(*left_list)[0]], start_reference, end_reference);
-                cout<<"nearest: "<<nearest<<endl;
+                //cout<<"nearest: "<<nearest<<endl;
                 exact_knn_projected     (result                     ,reference     ,query->row_data[(*left_list)[0]],(*query_projected)[(*left_list)[0]],nearest, k,(*left_list)[0],num_ref_points);    
-                cout<<"result: "<<endl;
-                print_vector_2D(*result);
-                cout<<"anjma shod"<<endl;
+                //cout<<"result: "<<endl;
+                //print_vector_2D(*result);
+                //cout<<"anjma shod"<<endl;
+                //delete left_list;
+                return (NULL);
             }
             else
             {
                 job_list = left_list;
+                //cout<<"continue with (";
+                //print_vector_int((*job_list));
                 task_size = (*job_list).size();
                 end_reference = middle_index+1;
             }
+        }
+        else
+        {
+            //delete job_list;
+            return (NULL);
         }
     }
     
@@ -593,7 +616,12 @@ int main()
     iota(query_order.begin(),query_order.end(),0); //Initializing
     //sort( query_order.begin(),query_order.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
     //sort( query_projected.begin(),query_projected.end());
+//cout<<endl;
 //print_vector_float(reference_projected);
+//cout<<endl;
+//print_vector_float(query_projected);
+    
+    
 
 int k = 50;
 int num_threads;
@@ -606,7 +634,7 @@ for (int i = 0 ; i<round_size;i++)
  pthread_mutex_t* thread_mutex = new pthread_mutex_t;
  pthread_mutex_init(thread_mutex,0);
 
-
+double runTime = -omp_get_wtime();
     for (int round = 0 ; round < round_num; round++)
     {
     thread_data* args = new thread_data;
@@ -638,6 +666,8 @@ for (int i = 0 ; i<round_size;i++)
        delete round_threads[tn];
     }
 }
+runTime +=omp_get_wtime();
+cout<<endl<<runTime;
 exit(0);
 
 bool cont;
@@ -668,7 +698,20 @@ for (int q = 0 ;q <num_query_points;q++)
     
     if (matches == k)
         score++;
+    else
+    {
+        cout<<endl<<"the fault is in : "<<q<<endl;
+        exit(0);
+        print_vector_int(KNN_one_row_test);
+        for (int i = 0; i < k ; i++)
+        {
+            cout<<" "<<exact_fast_result[q][i];
+        }
+        cout<<endl;
+        exit(0);
+    }
 }
 cout<<score<<" "<<num_threads<<" ";
 }
+print_vector_2D(exact_fast_result);
 }

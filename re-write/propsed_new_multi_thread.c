@@ -495,7 +495,7 @@ int c = 0;
         //cout<<endl<<"row "<<row<<"col "<<c-1<<"changed";
         knn.pop();
     }
-    cout<<"num calc: "<<calculated_distances_num<<" ";
+    //cout<<"num calc: "<<calculated_distances_num<<" ";
 }
 
 spliting_state one_step_parallel_binary_search(vector<float>* query_projected,int start_reference, int end_reference, int start_query, int end_query, vector<vector<int>>* result, Frame* reference, Frame* query, vector<int>* query_order, int k, int num_ref_points)
@@ -560,7 +560,7 @@ void* parallel_binary_search(void * data_void)
         return NULL;
     }
     state = one_step_parallel_binary_search(query_projected , start_reference, end_reference , start_query, end_query, result, reference, query, query_order, k, num_ref_points);
-    cout<<" state left: "<<state.left_size<<" state right size: "<<state.right_size<<" "<<end_reference<<" "<<start_reference<<endl;
+    //cout<<" state left: "<<state.left_size<<" state right size: "<<state.right_size<<" "<<end_reference<<" "<<start_reference<<endl;
     middle_index = state.middle_index;
         if(state.right_size > 0)
         {
@@ -695,6 +695,7 @@ int main()
 int k = 50;
 int num_threads;
 vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
+double runTime = -omp_get_wtime();
     for (int round = 0 ; round < round_num; round++)
     {
     thread_data* args = new thread_data;
@@ -730,6 +731,8 @@ vector<vector<int>> exact_fast_result  (num_query_points , vector<int> (k, 0));
        delete round_threads[tn];
     }
 }
+runTime += omp_get_wtime();
+cout<<runTime;
 exit(0);
 
 bool cont;

@@ -1,0 +1,23 @@
+
+digraph simple_hierarchy {
+
+node [color=Green,fontcolor=Blue,font=Courier,shape=record]
+
+
+"IDEAL(0)"[shape=record,sides=5,peripheries=2,color=pink,style=filled]
+"IL1(0)" -> "IDEAL(0)"
+
+"IL1(0)"[shape=record,sides=5,peripheries=2,color=pink,style=filled]
+"Main(0)" -> "void(0)"
+
+"Main(0)"[shape=record,sides=5,peripheries=1,color=seagreen,style=filled]
+"HBM(0)" -> "Main(0)"
+
+"HBM(0)"[shape=record,sides=5,peripheries=1,color=bronze,style=filled]
+"LLC(0)" -> "HBM(0)"
+
+"LLC(0)"[shape=record,sides=5,peripheries=2,color=pink,style=filled]
+"DL1(0)" -> "LLC(0)"
+
+"DL1(0)"[shape=record,sides=5,peripheries=2,color=pink,style=filled]
+}
