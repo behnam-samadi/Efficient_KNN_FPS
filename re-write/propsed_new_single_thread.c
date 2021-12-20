@@ -428,7 +428,105 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
             end_knn++;
         }
     }
-    cout<<"---------- "<<start_knn<<" , "<<end_knn<<" -----"<<endl;
+
+    float max_dist = calc_distance(reference->data[start_knn], query, Euclidean);
+    num_calc_dis++;
+    float dist;
+    int calculated_distances_num = 0;
+    priority_queue<pair<float, int>> knn;
+    for(int c = start_knn; c<= end_knn; c++)
+    {
+        dist = calc_distance(reference->data[c], query, Euclidean);
+        num_calc_dis++;
+
+        calculated_distances_num ++;
+        knn.push(make_pair(dist, c));
+        if (dist > max_dist)
+        {
+            max_dist = dist;
+        }
+    }
+    //cout<<" start_knn: "<<start_knn<<" end_knn: "<<end_knn<<endl;
+    int right_arrow = end_knn+1;
+    int left_arrow = start_knn-1;
+    max_dist = knn.top().first;
+    
+    if (right_arrow<num_ref_points)
+        {
+    while( abs( reference->data[right_arrow][point_dim] - query_projected ) <= (sqrt(3)*max_dist)    )
+    {
+        dist = calc_distance(reference->data[right_arrow], query, Euclidean);
+
+        num_calc_dis++;
+        calculated_distances_num++;
+        if (dist < max_dist)
+        {
+            knn.pop();
+            knn.push(make_pair(dist, right_arrow));
+            max_dist = knn.top().first;
+        }
+        right_arrow++;
+        if (right_arrow == num_ref_points)
+            break;
+    }
+}
+if (left_arrow>0)
+{
+        while(abs(reference->data[left_arrow][point_dim] - query_projected) <= (sqrt(3)*max_dist))
+    {
+        dist = calc_distance(reference->data[left_arrow], query, Euclidean);
+        num_calc_dis++;
+        calculated_distances_num++;
+        if (dist < max_dist)
+        {
+            
+            knn.pop();
+            knn.push(make_pair(dist, left_arrow));
+            max_dist = knn.top().first;
+        }
+        left_arrow--;
+        if (left_arrow<0) break;
+    }
+}
+int c = 0;
+    while(knn.size())
+    {
+        //cout<<endl<<"row "<<row<<"col "<<c<<"is changing";
+        (*output)[row][c++] = knn.top().second;
+        //cout<<endl<<"row "<<row<<"col "<<c-1<<"changed";
+        knn.pop();
+    }
+}
+
+
+
+void exact_knn_projected_(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
+{
+    
+    int start_knn = nearest_index;
+    int end_knn = nearest_index;
+    while((end_knn - start_knn + 1) < K)
+    {
+        if (start_knn ==0)    
+        {
+            end_knn += (K - (end_knn - start_knn + 1));
+            break;
+        }
+        if (end_knn == num_ref_points-1)
+        {
+            start_knn -= (K - (end_knn - start_knn + 1));
+            break;
+        }
+        if ((abs((reference->data)[start_knn-1][point_dim]-query_projected)) < (abs((reference->data)[end_knn+1][point_dim]-query_projected)))
+        {
+            start_knn--;
+        }
+        else
+        {
+            end_knn++;
+        }
+    }
+    //cout<<"---------- "<<start_knn<<" , "<<end_knn<<" -----"<<endl;
 
     float max_dist = calc_distance(reference->data[start_knn], query, Euclidean);
     num_calc_dis++;
@@ -476,7 +574,7 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
     cout<<"---------- "<<start_knn<<" , "<<end_knn<<" -----"<<endl;
     while(search_cont)
     {
-        cout<<"********* "<<next<<" *********";
+        //cout<<"********* "<<next<<" *********";
         dist = calc_distance(reference->data[next], query, Euclidean);
         num_calc_dis++;
         if (dist < max_dist)
