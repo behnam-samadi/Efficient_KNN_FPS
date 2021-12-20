@@ -428,6 +428,7 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
             end_knn++;
         }
     }
+    cout<<"---------- "<<start_knn<<" , "<<end_knn<<" -----"<<endl;
 
     float max_dist = calc_distance(reference->data[start_knn], query, Euclidean);
     num_calc_dis++;
@@ -472,9 +473,12 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
             next = right_candidate;
     else
         next = left_candidate;
+    cout<<"---------- "<<start_knn<<" , "<<end_knn<<" -----"<<endl;
     while(search_cont)
     {
+        cout<<"********* "<<next<<" *********";
         dist = calc_distance(reference->data[next], query, Euclidean);
+        num_calc_dis++;
         if (dist < max_dist)
         {
             knn.pop();
@@ -486,8 +490,8 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
         //note1
         if (left_progress && right_progress)
         {
-            right_candidate++;
-            left_candidate--;
+            //right_candidate++;
+            //left_candidate--;
                         if (left_candidate == -1)
             {
                 left_candidate++;
@@ -501,9 +505,14 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
                 right_progress = false;
             }
              if (abs(reference->data[right_candidate][point_dim] - query_projected) <abs(reference->data[left_candidate][point_dim] - query_projected))
-            next = right_candidate;
+            {next = right_candidate;
+                right_candidate++;
+            }
             else
+            {
             next = left_candidate;
+            left_candidate--;
+        }
         }
         else
         {
