@@ -447,47 +447,78 @@ void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vect
         }
     }
     //cout<<" start_knn: "<<start_knn<<" end_knn: "<<end_knn<<endl;
-    int right_arrow = end_knn+1;
-    int left_arrow = start_knn-1;
-    max_dist = knn.top().first;
     
-    if (right_arrow<num_ref_points)
-        {
-    while( abs( reference->data[right_arrow][point_dim] - query_projected ) <= (sqrt(3)*max_dist)    )
+    max_dist = knn.top().first;
+    bool right_progress = true;
+    bool left_progress = true;
+    bool bidirectional_cont = true;
+    int right_candidate = end_knn + 1;
+    int left_candidate = start_knn - 1;
+    int next;
+    bool search_cont = true;
+    if (left_candidate == -1)
     {
-        dist = calc_distance(reference->data[right_arrow], query, Euclidean);
-
-        num_calc_dis++;
-        calculated_distances_num++;
+        left_candidate++;
+        bidirectional_cont = false;
+        left_progress = false;
+    }
+    if (right_candidate == num_ref_points)
+    {
+        right_candidate--;
+        bidirectional_cont = false;
+        right_progress = false;
+    }
+    if (abs(reference->data[right_candidate][point_dim] - query_projected) <abs(reference->data[left_candidate][point_dim] - query_projected))
+            next = right_candidate;
+    else
+        next = left_candidate;
+    while(search_cont)
+    {
+        dist = calc_distance(reference->data[next], query, Euclidean);
         if (dist < max_dist)
         {
             knn.pop();
-            knn.push(make_pair(dist, right_arrow));
+            knn.push(make_pair(dist, next));
             max_dist = knn.top().first;
         }
-        right_arrow++;
-        if (right_arrow == num_ref_points)
-            break;
-    }
-}
-if (left_arrow>0)
-{
-        while(abs(reference->data[left_arrow][point_dim] - query_projected) <= (sqrt(3)*max_dist))
-    {
-        dist = calc_distance(reference->data[left_arrow], query, Euclidean);
-        num_calc_dis++;
-        calculated_distances_num++;
-        if (dist < max_dist)
+        if (abs( reference->data[next][point_dim] - query_projected ) > (sqrt(3)*max_dist)  )
+            search_cont = false;
+        //note1
+        if (left_progress && right_progress)
         {
-            
-            knn.pop();
-            knn.push(make_pair(dist, left_arrow));
-            max_dist = knn.top().first;
+            right_candidate++;
+            left_candidate--;
+                        if (left_candidate == -1)
+            {
+                left_candidate++;
+                bidirectional_cont = false;
+                left_progress = false;
+            }
+            if (right_candidate == num_ref_points)
+            {
+                right_candidate--;
+                bidirectional_cont = false;
+                right_progress = false;
+            }
+             if (abs(reference->data[right_candidate][point_dim] - query_projected) <abs(reference->data[left_candidate][point_dim] - query_projected))
+            next = right_candidate;
+            else
+            next = left_candidate;
         }
-        left_arrow--;
-        if (left_arrow<0) break;
+        else
+        {
+        if (!left_progress)
+        {
+            right_candidate++;
+            next = right_candidate;
+        }
+        if (!right_progress)
+        {
+            left_candidate--;
+            next = left_candidate;
+        }
     }
-}
+    }
 int c = 0;
     while(knn.size())
     {
