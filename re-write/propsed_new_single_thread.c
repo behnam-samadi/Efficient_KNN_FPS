@@ -402,7 +402,7 @@ spliting_result binary_search_split_(vector<vector<float>> *input, int start_ind
 
 
 
-void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
+void exact_knn_projected_(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
 {
     
     int start_knn = nearest_index;
@@ -500,7 +500,7 @@ int c = 0;
 
 
 
-void exact_knn_projected_(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
+void exact_knn_projected(vector<vector<int>>* output,const Frame* reference,vector<float>query, float query_projected, int nearest_index, int K, int row, int num_ref_points)
 {
     
     int start_knn = nearest_index;
@@ -783,13 +783,18 @@ int main()
 {
 
     int frame_channels = 3;
-    Frame reference("reformed_dataset/0_cut_20000.txt");
+    //Frame reference("reformed_dataset/0_cut_20000.txt");
+    Frame reference("reformed_dataset/107_cut_20000.txt");
+    //Frame reference("reformed_dataset/0000000000.txt");
+    //Frame reference("reformed_dataset/0000000107.txt");
     Frame query("reformed_dataset/0000000001_shuffle_cut.txt");
     int num_ref_points = reference.num_points;
     int num_query_points = query.num_points;
     int num_query_points_orig = num_query_points;
     int round_size = fix_round_size;
     int round_num = num_query_points/round_size;
+    cout<<endl<<num_ref_points<<" "<<num_query_points<<endl;
+
        vector<float> reference_projected(num_ref_points);
     vector<float> query_projected(num_query_points);
     for (int i =0 ; i<num_ref_points;i++)
