@@ -18,7 +18,7 @@ using namespace std;
 //todo: move num_calc_dis to function
 int num_calc_dis;
 //todo remove
-pthread_mutex_t * cout_mutex;
+
 
 enum dist_metric
 {
@@ -484,7 +484,7 @@ void * root_func (void* void_data)
     left_child_write->push(temp_pair);
     pthread_mutex_unlock(left_child_write_mutex);
     pthread_mutex_lock(right_child_write_mutex);
-    left_child_write->push(temp_pair);
+    right_child_write->push(temp_pair);
     pthread_mutex_unlock(right_child_write_mutex);
 }
 
@@ -513,6 +513,7 @@ void * inner_node_func (void* void_data)
     int query_index;
     while(cont)
     {
+
         read = false;
         pthread_mutex_lock(read_stream_mutex);
         //pthread_mutex_lock(cout_mutex);
@@ -535,6 +536,12 @@ void * inner_node_func (void* void_data)
             {
                 if (query_point<middle_value)
                 {
+                    if (query_index == 2172)
+        {
+            cout<<"------------------------"<<endl;
+            cout<<id_for_check<<" "<<query_point<<"<"<<middle_value<<"gotoleft";
+            cout<<"--------------------------"<<endl;
+        }
                     pthread_mutex_lock(left_child_write_mutex);
                     left_child_write->push(current_pair);
                     //if (id_for_check == 1) cout<<current_pair.index<<" wrote to L "<<id_for_check<<endl;
@@ -542,6 +549,12 @@ void * inner_node_func (void* void_data)
                 }
                 else if (query_point > middle_value)
                 {
+                                if (query_index == 16)
+        {
+            cout<<"------------------------"<<endl;
+            cout<<id_for_check<<" "<<middle_value<<"gotoright";
+            cout<<"--------------------------"<<endl;
+        }
                     pthread_mutex_lock(right_child_write_mutex);
                     right_child_write->push(current_pair);
                     //if (id_for_check == 1) cout<<current_pair.index<<" wrote to R "<<id_for_check<<endl;
@@ -581,13 +594,6 @@ void * leaf_node_func (void* void_data)
     float ** ref_data = args->ref_data;
     pthread_mutex_t * read_stream_mutex = args->read_stream_mutex;
     int id_for_check = args->id_for_check;
-    pthread_mutex_lock(cout_mutex);
-    //cout<<endl<<"***********"<<endl;
-    //cout<<"leaf with index "<<id_for_check<<endl;
-    //cout<<"start_index "<<start_index<<endl;
-    //cout<<"end index "<<end_index<<endl;
-
-    pthread_mutex_unlock(cout_mutex);
     bool cont = true;
     bool read;
     int nearest;
@@ -607,15 +613,16 @@ void * leaf_node_func (void* void_data)
         {
             if (temp_pair.index != -1)
             {
-                //cout<<" leaf: "<<temp_pair.index;
+                if (temp_pair.index == 2172)
+                {
+                    cout<<"injast://////////////////////////////////////////"<<endl;
+                    cout<<temp_pair.value<<" "<<start_index<<" "<<end_index<<" "<<id_for_check<<" "<< binary_search(ref_data, temp_pair.value, start_index, end_index)<<endl;
+                }
                 NN_result[temp_pair.index] = binary_search(ref_data, temp_pair.value, start_index, end_index);
             }
             else
             {
                 cont = false;
-                pthread_mutex_lock(cout_mutex);
-                cout<<"leaf_node "<<id_for_check<<"reported -1"<<endl;
-                pthread_mutex_unlock(cout_mutex);
             }
 
         }
@@ -629,8 +636,7 @@ void * leaf_node_func (void* void_data)
 int main()
 {
     //to do : remove
-    cout_mutex = new pthread_mutex_t;
-    pthread_mutex_init(cout_mutex,0);
+    
 
     //*****************************************************
     //reading frames
@@ -642,7 +648,7 @@ int main()
     int num_ref_points = reference.num_points;
     int num_query_points = query.num_points;
     //use defined:
-    int num_queries_to_be_processesd = 640;
+    int num_queries_to_be_processesd = 6400;
     int max_job_index = num_queries_to_be_processesd -1;
     
     //*****************************************************
@@ -693,7 +699,7 @@ int main()
     //*****************************************************
     //preparing data for threads
     //*****************************************************
-    int num_threads = 15;
+    int num_threads = 63;
     int * NN_result = new int[num_queries_to_be_processesd];
     int n = log2(num_threads+1);
     bool continue_process = true;
@@ -726,7 +732,7 @@ int main()
         else
         {
             start_boundries[c] = start_boundries[(c-1)/2];
-            end_boundries[c] = (start_boundries[(c-1)/2] + end_boundries[(c-1)/2])/2 -1;
+            end_boundries[c] = (start_boundries[(c-1)/2] + end_boundries[(c-1)/2])/2;
         }
         middle_indices[c] = (start_boundries[c] + end_boundries[c])/2;
     }
@@ -774,7 +780,7 @@ int main()
 
     //----------data for leaf nodes
     leaf_node_thread_data * data_for_leaves = new leaf_node_thread_data[(int)(pow(2,n-1))];
-    cout<<endl;
+    
     for(int i = 0 ; i<pow(2,n-1); i++)
     {
          data_for_leaves[i].read_stream = &data_streams[i + (int)((pow(2,n-1))-1)];
@@ -784,19 +790,13 @@ int main()
          data_for_leaves[i].NN_result = NN_result;
          data_for_leaves[i].ref_data = reference.data;
          data_for_leaves[i].id_for_check = i + (int)((pow(2,n-1))-1);
-         cout<<i<<" "<<data_for_leaves[i].id_for_check<<endl;
-         cout<<i<<" "<<data_for_leaves[i].start_index<<endl;
-         cout<<i<<" "<<data_for_leaves[i].end_index<<endl;
+
     }
     
     
     
 
-    cout<<data_for_root.left_child_write_mutex<<endl;
-    cout<<data_for_inners[0].read_stream_mutex<<endl;
-    cout<<data_for_inners[2].left_child_write_mutex<<endl;
-
-    cout<<data_for_inners[6].read_stream_mutex  <<endl;
+    
     
     
 
@@ -813,12 +813,12 @@ int main()
 
     for (int t = 1 ; t <= pow(2,n-1)-2; t++)
     {
-        cout<<"thread " <<t<<" cretaed with data_for_inners["<<t-1<<"]"<<endl;
+        
         pthread_create(&(threads[t]), NULL, inner_node_func, (void*)(&(data_for_inners[t-1])));
     }
     for (int t = pow(2, n-1)-1; t<=pow(2,n)-2;t++)
     {
-        cout<<"thread " <<t<<" cretaed with data_for_leaves["<<t-(int)pow(2,n-1)-1<<"]"<<endl;
+        
         //pthread_create(&(threads[t]), NULL, leaf_node_func, (void*)(&(data_for_leaves[t-((int)pow(2,n-1)-1])));   
         pthread_create(&(threads[t]), NULL, leaf_node_func, (void*)(&(data_for_leaves[t - ((int)pow(2,n-1)-1)])));
     }
@@ -826,6 +826,39 @@ int main()
     {
         pthread_join((threads[t]),NULL);
     }
+    cout<<endl;
+    int score = 0;
+    for (int i = 0; i <=max_job_index;i++ )
+    {
+        //cout<<i<<" "<<query_projected[i]<<endl;
+     
+        if (NN_result[i] ==binary_search(reference.data, query_projected[i], 0, num_ref_points -1))
+        {
+            score++;
+        }
+        else
+        {
+            cout<<"*********"<<endl;
+            cout<<i<<endl;
+            cout<<NN_result[i]<<endl;
+            cout<<binary_search(reference.data, query_projected[i], 0, num_ref_points -1)<<endl;
+            cout<<"*********"<<endl;
+            cout<<query_projected[i]<<endl;
+        }
+    }
+    cout<<score<<endl;
+    
+    for (int t = 0 ; t <num_threads;t++)
+    {
+        cout<<t<<" "<<middle_indices[t]<<" "<<query_projected[middle_indices[t]]<<endl;
+        cout<<t<<" : "<<start_boundries[t]<<endl;
+        cout<<t<<" : "<<end_boundries[t]<<endl;
+    }
+
+    cout<<endl;
+    cout<<binary_search(reference.data, query_projected[2172], 0, num_ref_points -1)<<endl;
+    cout<<binary_search(reference.data, query_projected[2172], 6250, 6874)<<endl;
+    cout<<reference.data[6558][point_dim]<<" "<<reference.data[6559][point_dim];
 
 
 }
