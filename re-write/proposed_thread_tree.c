@@ -536,12 +536,6 @@ void * inner_node_func (void* void_data)
             {
                 if (query_point<middle_value)
                 {
-                    if (query_index == 2172)
-        {
-            cout<<"------------------------"<<endl;
-            cout<<id_for_check<<" "<<query_point<<"<"<<middle_value<<"gotoleft";
-            cout<<"--------------------------"<<endl;
-        }
                     pthread_mutex_lock(left_child_write_mutex);
                     left_child_write->push(current_pair);
                     //if (id_for_check == 1) cout<<current_pair.index<<" wrote to L "<<id_for_check<<endl;
@@ -549,12 +543,6 @@ void * inner_node_func (void* void_data)
                 }
                 else if (query_point > middle_value)
                 {
-                                if (query_index == 16)
-        {
-            cout<<"------------------------"<<endl;
-            cout<<id_for_check<<" "<<middle_value<<"gotoright";
-            cout<<"--------------------------"<<endl;
-        }
                     pthread_mutex_lock(right_child_write_mutex);
                     right_child_write->push(current_pair);
                     //if (id_for_check == 1) cout<<current_pair.index<<" wrote to R "<<id_for_check<<endl;
@@ -612,12 +600,7 @@ void * leaf_node_func (void* void_data)
         if (read)
         {
             if (temp_pair.index != -1)
-            {
-                if (temp_pair.index == 2172)
-                {
-                    cout<<"injast://////////////////////////////////////////"<<endl;
-                    cout<<temp_pair.value<<" "<<start_index<<" "<<end_index<<" "<<id_for_check<<" "<< binary_search(ref_data, temp_pair.value, start_index, end_index)<<endl;
-                }
+            {                
                 NN_result[temp_pair.index] = binary_search(ref_data, temp_pair.value, start_index, end_index);
             }
             else
@@ -695,6 +678,13 @@ int main()
         query_projected[i] += query.row_data[i][j];
         }
     }
+
+for (int i = 0; i <=max_job_index;i++ )
+    {
+                //cout<<reference.data[NN_result[i]][point_dim] <<" " <<reference.data[binary_search(reference.data, query_projected[i], 0, num_ref_points -1)][point_dim]<<endl;
+                cout<<NN_result[i] <<" " <<binary_search(reference.data, query_projected[i], 0, num_ref_points -1)<<endl;
+    }
+    
 
     //*****************************************************
     //preparing data for threads
@@ -828,7 +818,7 @@ int main()
     }
     cout<<endl;
     int score = 0;
-    for (int i = 0; i <=max_job_index;i++ )
+    /*for (int i = 0; i <=max_job_index;i++ )
     {
         //cout<<i<<" "<<query_projected[i]<<endl;
      
@@ -838,27 +828,16 @@ int main()
         }
         else
         {
-            cout<<"*********"<<endl;
-            cout<<i<<endl;
-            cout<<NN_result[i]<<endl;
-            cout<<binary_search(reference.data, query_projected[i], 0, num_ref_points -1)<<endl;
-            cout<<"*********"<<endl;
-            cout<<query_projected[i]<<endl;
+            if (reference.data[NN_result[i]][point_dim] == reference.data[binary_search(reference.data, query_projected[i], 0, num_ref_points -1)][point_dim])
+                score++;
+            else
+            {
+                //cout<<reference.data[NN_result[i]][point_dim] <<" " <<reference.data[binary_search(reference.data, query_projected[i], 0, num_ref_points -1)][point_dim]<<endl;
+                cout<<NN_result[i] <<" " <<binary_search(reference.data, query_projected[i], 0, num_ref_points -1)<<endl;
+
+            }
         }
     }
-    cout<<score<<endl;
+    cout<<score<<endl;*/
     
-    for (int t = 0 ; t <num_threads;t++)
-    {
-        cout<<t<<" "<<middle_indices[t]<<" "<<query_projected[middle_indices[t]]<<endl;
-        cout<<t<<" : "<<start_boundries[t]<<endl;
-        cout<<t<<" : "<<end_boundries[t]<<endl;
-    }
-
-    cout<<endl;
-    cout<<binary_search(reference.data, query_projected[2172], 0, num_ref_points -1)<<endl;
-    cout<<binary_search(reference.data, query_projected[2172], 6250, 6874)<<endl;
-    cout<<reference.data[6558][point_dim]<<" "<<reference.data[6559][point_dim];
-
-
 }
