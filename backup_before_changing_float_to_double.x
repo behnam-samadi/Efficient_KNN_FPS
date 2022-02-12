@@ -12,8 +12,8 @@
 #include <omp.h>
 #include <time.h>
 #define Points_Dim 3
-#define fix_reference_size 121000
-#define fix_query_size 121000
+#define point_dim 3
+
 #define fix_round_size 64
 using namespace std;
 int num = 0;
@@ -28,12 +28,61 @@ enum dist_metric
     Euclidean,
     Manhattan
 };
+
+
+/*
+    ifstream fin(file_adress, ios::binary);
+    fin.seekg(0, ios::end);
+    const size_t num_elements = fin.tellg() / sizeof(float);
+    fin.seekg(0, ios::beg);
+    Frame frame;
+    frame.points_dim = output_dims;
+    frame.num_points = num_elements/points_dim;
+    vector<float> data_temp(num_elements);
+    vector<vector<float>> data  (num_elements/points_dim , vector<float> (output_dims, 0));
+    fin.read(reinterpret_cast<char*>(&data_temp[0]), num_elements*sizeof(float));
+    for (size_t i = 0; i < frame.num_points; i++){
+    for(size_t j = 0; j < frame.points_dim; j++)
+    {
+        data[i][j] = data_temp[i*points_dim + j];
+    }
+    
+}
+    frame.data = data;
+    return(frame);
+*/
+
+
+
 class Frame{
-    public:
-    int num_points;
-    int points_dim;
-    vector<vector<float>> data;
+    //later: change to private
+public:
+    vector<vector<double>> data;
+    
+    //vector<vector<double>> data;
+    Frame(string file_adress, int max_points = 0)
+    {
+
+    ifstream fin(file_adress, ios::binary);
+    fin.seekg(0, ios::end);
+    size_t num_elements = fin.tellg() / sizeof(double);
+    cout<<file_adress<<file_adress<< num_elements<<endl;
+    if (max_points!=0) num_elements = (max_points*Points_Dim);
+    int num_points = num_elements/Points_Dim;
+    fin.seekg(0, ios::beg);
+    //fin.read(reinterpret_cast<char*>(&data_temp[0]), num_elements*sizeof(float))
+    data = vector<vector<float>> (num_points , vector<float> (Points_Dim, 0));
+    for (int c = 0 ; c<num_points; c++)
+    {
+        //if (c%200 == 0) 
+          //  {cout<<c<<endl;}
+        fin.read(reinterpret_cast<char*>(&temp[c][0]), Points_Dim*sizeof(double));
+        //cout<<data[c][0]<<endl;
+    }
+}
+
 };
+
 
 
 float calc_distance_ (vector<float> v1, vector<float> v2, dist_metric type)
@@ -283,7 +332,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
         }
     }
     create_kd_tree_rec(tree, 0, 0, all_points, sub_points_indices, boundries);
-    cout<<endl<<endl<<endl<<"kdtree cretaed";
+    
     return tree;
 }
 float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float>reference, vector<float>query, int point_index)
@@ -528,31 +577,7 @@ void print_vector (vector<bool> v){
     cout<<endl;
 }
 
-Frame read_data (string file_adress, int points_dim, int output_dims, int num_points)
-{ 
-    //cout<<"read_data has been called"<<endl;
-    ifstream fin(file_adress, ios::binary);
-    fin.seekg(0, ios::end);
-    const size_t num_elements = fin.tellg() / sizeof(float);
-    fin.seekg(0, ios::beg);
-    Frame frame;
-    frame.points_dim = output_dims;
-    frame.num_points = num_elements/points_dim;
-    frame.num_points = num_points;
-    vector<float> data_temp(num_points*points_dim);
-    vector<vector<float>> data  (num_points , vector<float> (output_dims, 0));
-    fin.read(reinterpret_cast<char*>(&data_temp[0]), num_points*points_dim*sizeof(float));
-    for (size_t i = 0; i < frame.num_points; i++){
-        //cout<<i<<"'th point hasbeen read"<<endl;
-    for(size_t j = 0; j < frame.points_dim; j++)
-    {
-        data[i][j] = data_temp[i*points_dim + j];
-    }
-    
-}
-    frame.data = data;
-    return(frame);
-}
+
 
 
 
@@ -637,193 +662,38 @@ void * KNN_KD_Tree (void* data)
 int main()
 {
 	int frame_channels = Points_Dim;
-    Frame reference = read_data("file_name_00000.bin", Points_Dim+1, frame_channels, fix_reference_size);
-    Frame query = read_data("0000000107.bin", Points_Dim+1, frame_channels, fix_query_size);
+    
+    Frame reference("reformed_dataset/0_gr.bin");
+    cout<<endl<<reference.data.size();
+    
+    Frame query("reformed_dataset/1_gr.bin");
+
+    //Frame query("reformed_dataset/0000000001_shuffle_cut.txt");
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     cout<<num_ref_points<<" "<<num_query_points<<endl;
+    cout<<endl<<reference.data.size()<<" "<<reference.data[0].size();
+    cout<<endl<<query.data.size()<<" "<<query.data[0].size();
+    cout<<"values:"<<endl;
+    cout<<endl<<query.data[3][0]<<endl;
+    cout<<reference.data[3][2];
     exit(0);
+    cout<<endl<<num_ref_points<<" "<<num_query_points<<endl;
     int num_query_points_orig = num_query_points;
-    num_query_points = fix_query_size;
-    int round_size = fix_query_size;
+    int round_size = fix_round_size;
     int round_num = num_query_points/round_size;
-    pthread_t* threads;
-    thread_data* data_for_threads;
     KD_Tree reference_tree(&(reference.data));
-    cout<<"the KDTreee has been created"<<endl;
-    //int k2 = 10;
-    //int * test_result = new int[k2];
-    //reference_tree.KNN_Exact(query.data[892], k2, test_result);
-    //cout<<endl;
-    //for (int i =0 ; i < 10; i++)
-    //{
-    //    cout<<test_result[i]<<" ";
-    //};
-    //exit(0);
-    int ** result = new int * [num_query_points];
-
-    int k = 50;
-    int num_temp_tets = 5120;
+    int num_temp_tets = 64;
     int ** result_temp = new int *[num_temp_tets];
-    int test_k = 20;
+    int test_k = 1;
     int num_exam_sum;
     double time_sum = 0;
+    double time_exact_sum = 0;
+    double runTime2;
     for (int q= 0 ; q< num_temp_tets;q++)
     {
-        //cout<<endl<<q;
         result_temp[q] = new int[test_k];
-        num_exam = 0;
-        double runTime2 = -omp_get_wtime();
-        reference_tree.KNN_Exact(query.data[q],test_k, result_temp[q]);
-        runTime2 += omp_get_wtime();
-        time_sum+= runTime2;
-        num_exam_sum +=num_exam;
-        cout<<num_exam<<endl;
-        //void KNN_Exact(vector<float> query, int k, int*result)
-    }
-    cout<<endl<<num_exam_sum / num_temp_tets<<endl;
-    cout<<endl<<time_sum / num_temp_tets<<endl;
-    exit(0);
-    double runTime = -omp_get_wtime();
-    for (int round = 0 ; round < round_num; round++)
-    {
-        threads = new pthread_t[round_size];
-        data_for_threads = new thread_data[round_size];
-        for (int t = 0 ; t < round_size; t++)
-        {
-            data_for_threads[t].tree = &reference_tree;
-            data_for_threads[t].query = query.data[round*round_size + t];
-            result[round*round_size+t] = new int[k];
-            data_for_threads[t].result = result[round*round_size + t];
-            data_for_threads[t].k = k;
-            data_for_threads[t].query_index = round*round_size + t;
-        }
-        for (int t = 0 ; t<round_size;t++)
-        {
-            pthread_create(&(threads[t]), NULL, KNN_KD_Tree, (void*)(&data_for_threads[t]));
-        }
-        for (int t = 0; t <round_size; t++)
-        {
-            pthread_join(threads[t], NULL);
-        }
-
-
-
-
-
-
-        delete[] threads;
-        delete[] data_for_threads;
-
-
-    }
-runTime +=omp_get_wtime();
-cout<<endl<<runTime<<endl;
-
-
-exit(0);
-cout<<endl<<runTime<<endl;
-    cout<<endl;
-
-for (int i = 0 ; i < 10; i++)
-{
-    for (int j = 0 ; j < k ; j++)
-    {
-        cout<<result[i][j]<<" ";
-    }
-    cout<<endl;
-}
-
-
-
-
-
-
-/*
-
-
-
-    int num_points = 12	;
-    print_vector_float(reference.data[0]);
-    
- 
-    print_vector_float(query.data[0]);
-    print_vector_float(reference.data[0]);
-    
-
-    
-    //print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
-    //print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
-    
-    for (int test = 1 ; test < 512; test++)
-    {
-
-        cout<<endl<<"test%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<"testing"<< test<<"'th point ";
-     kd_result = test_tree.KNN_Exact(query.data[test], k);
-     cout<<"number of points examined: "<<endl<<num_exam;
-     exit(0);
-     correct_result = KNN_one_row(&reference, &query, k , Euclidean, test);
-     if (test==20)
-        {
-            print_vector_int(kd_result);
-            print_vector_int(correct_result);
-            exit(0);
-        }
-     bool found;   
-     int score_in = 0;
-     for (int i = 0 ; i < k ; i++)
-     {
-        found = false;
-        cout<<endl;
-        for (int j = 0 ; j < k ; j++)
-        {
-            cout<<endl<<(kd_result[i] == correct_result[j]);
-            if (kd_result[i] == correct_result[j]) found = true;
-        }
-        if (found) score_in++;
-        
-     }
-     if (score_in == k) score++;
-    }
-    cout<<endl<<score;
-    exit(0);
-    
-
-
-
-
-    cout<<"final result"<<endl;
-
-    exit(0);
-
-    //KD_Tree test_tree(&test_points);
-    runTime +=omp_get_wtime();
-    cout<<runTime;
-    //cout<<endl<<"result: "<<downward_search(test_tree.tree, {-2,7,9});
-
-    exit(0);
-
-    //node * tree = Create_KD_Tree(&(reference.data));
-    cout<<endl<<"The KD-Tree Has been Created"<<endl;
-    for (int i = 0 ; i < test_tree.num_points;i++)
-    {
-        
-        if (test_tree.tree[i].is_set)
-        {
-        cout<<endl<<i<<"'th node:"<<endl;
-        cout<<test_tree.tree[i].dimension<<endl;
-        cout<<test_tree.tree[i].branchpoint<<endl;
-        print_vector_float(test_tree.tree[i].point);
-        //exit(0);
-        print_vector_2D(test_tree.tree[i].boundries.limits);
-        cout<<endl;
-        //print_vector_2D_bool(test_tree.tree[i].boundries.is_set);
+        reference_tree.KNN_Exact(query.data[q],test_k, result_temp[q]);       
     }
 
-    }
-
-    
-    //node * tree = Create_KD_Tree(&(reference.data));
-*/
-	return 0;
 }

@@ -12,8 +12,8 @@
 #include <omp.h>
 #include <time.h>
 #define Points_Dim 3
-#define fix_reference_size 121000
-#define fix_query_size 121000
+#define point_dim 3
+
 #define fix_round_size 64
 using namespace std;
 int num = 0;
@@ -28,20 +28,69 @@ enum dist_metric
     Euclidean,
     Manhattan
 };
+
+
+/*
+    ifstream fin(file_adress, ios::binary);
+    fin.seekg(0, ios::end);
+    const size_t num_elements = fin.tellg() / sizeof(double);
+    fin.seekg(0, ios::beg);
+    Frame frame;
+    frame.points_dim = output_dims;
+    frame.num_points = num_elements/points_dim;
+    vector<double> data_temp(num_elements);
+    vector<vector<double>> data  (num_elements/points_dim , vector<double> (output_dims, 0));
+    fin.read(reinterpret_cast<char*>(&data_temp[0]), num_elements*sizeof(double));
+    for (size_t i = 0; i < frame.num_points; i++){
+    for(size_t j = 0; j < frame.points_dim; j++)
+    {
+        data[i][j] = data_temp[i*points_dim + j];
+    }
+    
+}
+    frame.data = data;
+    return(frame);
+*/
+
+
+
 class Frame{
-    public:
-    int num_points;
-    int points_dim;
-    vector<vector<float>> data;
+    //later: change to private
+public:
+    vector<vector<double>> data;
+    
+    //vector<vector<double>> data;
+    Frame(string file_adress, int max_points = 0)
+    {
+
+    ifstream fin(file_adress, ios::binary);
+    fin.seekg(0, ios::end);
+    size_t num_elements = fin.tellg() / sizeof(double);
+    cout<<file_adress<<file_adress<< num_elements<<endl;
+    if (max_points!=0) num_elements = (max_points*Points_Dim);
+    int num_points = num_elements/Points_Dim;
+    fin.seekg(0, ios::beg);
+    //fin.read(reinterpret_cast<char*>(&data_temp[0]), num_elements*sizeof(double))
+    data = vector<vector<double>> (num_points , vector<double> (Points_Dim, 0));
+    for (int c = 0 ; c<num_points; c++)
+    {
+        if (c%200 == 0) 
+            {cout<<c<<endl;}
+        fin.read(reinterpret_cast<char*>(&data[c][0]), Points_Dim*sizeof(double));
+        //cout<<data[c][0]<<endl;
+    }
+}
+
 };
 
 
-float calc_distance_ (vector<float> v1, vector<float> v2, dist_metric type)
+
+double calc_distance_ (vector<double> v1, vector<double> v2, dist_metric type)
 {    
     if (type == Modified_Manhattan)
     {
-        float sum1 = 0;
-        float sum2 = 0;
+        double sum1 = 0;
+        double sum2 = 0;
         for(int i = 0; i<v1.size();i++)
             sum1+=v1[i];
         for(int i = 0; i<v2.size();i++)
@@ -50,7 +99,7 @@ float calc_distance_ (vector<float> v1, vector<float> v2, dist_metric type)
     }
     else
     {
-        float sum = 0;
+        double sum = 0;
         for(int i = 0; i<v1.size();i++)
         {
             if (type==Euclidean)
@@ -58,14 +107,14 @@ float calc_distance_ (vector<float> v1, vector<float> v2, dist_metric type)
             if (type==Manhattan)
             sum+= abs(v1[i] - v2[i]);
         }
-        float result = sum;
+        double result = sum;
         if (type == Euclidean)
             result = sqrt(result);
         return(result);
         }
 }
-vector<int> topK_(vector<float> input, int K){
-    float inf = std::numeric_limits<float>::max();
+vector<int> topK_(vector<double> input, int K){
+    double inf = std::numeric_limits<double>::max();
     vector<int> result(K);
     for (int c = 0; c<K; c++){
         int min_arg = 0;
@@ -85,9 +134,9 @@ vector<int> KNN_one_row (Frame * reference, Frame * query, int K,dist_metric met
     int num_ref_points = (*reference).data.size();
     int num_query_points = (*query).data.size();
     vector<int> result(K);
-    vector<float>  distance (num_ref_points);
+    vector<double>  distance (num_ref_points);
     int i = index;
-        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        //cout<<"KNN, Progress:" <<(double)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
             distance[j] = calc_distance_((*query).data[i], (*reference).data[j], metric);
@@ -104,7 +153,7 @@ vector<int> KNN_one_row (Frame * reference, Frame * query, int K,dist_metric met
 return(result);
 }
 
-void print_vector_float (vector<float> v){
+void print_vector_double (vector<double> v){
     for (int i = 0 ; i< v.size();i++)
     {
         cout<<endl<<v[i]<<" ";
@@ -122,18 +171,18 @@ void print_vector_int (vector<int> v){
 struct node_boundries
 {
     //vector<vector<bool>> is_set (3 , vector<bool> (2, 0));
-    //vector<vector<float>> limits (3 , vector<float> (2, 0));
+    //vector<vector<double>> limits (3 , vector<double> (2, 0));
     vector<vector<bool>> is_set;
-    vector<vector<float>> limits;
+    vector<vector<double>> limits;
 };
 
 struct node
 {
     int dimension;
-    float branchpoint;
-    //float borders[Points_Dim][2];
+    double branchpoint;
+    //double borders[Points_Dim][2];
     node_boundries boundries;
-    vector<float> point;
+    vector<double> point;
     bool is_set;
     int children_state;
     int point_index;
@@ -147,7 +196,7 @@ public:
     node * tree;
     int num_points;
 
-void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<float>> *all_points, vector<int>sub_points_indices, node_boundries boundries)
+void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<double>> *all_points, vector<int>sub_points_indices, node_boundries boundries)
 {
  /*   if (index==5)
     {
@@ -170,7 +219,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
         tree[index].point_index = sub_points_indices[0];
         tree[index].boundries = boundries;
         //cout<<"with size one";
-        //print_vector_float(tree[index].point);
+        //print_vector_double(tree[index].point);
         tree[index].is_set = 1;
         tree[index].examined = false;
         tree[index].children_state = 3;
@@ -194,7 +243,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
     //cout<<endl<<tree[index].dimension<<endl;
     //cout<<endl<<tree[index].branchpoint<<endl;
     //cout<<"point for "<<index<<"'th point: "<<endl;
-    //print_vector_float(tree[index].point);
+    //print_vector_double(tree[index].point);
     
 
         
@@ -243,13 +292,13 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
     cout<<"chap"<<endl;
     for(int i = 0 ; i<left_points.size();i++)
     {
-        print_vector_float((*all_points)[left_points[i]]);
+        print_vector_double((*all_points)[left_points[i]]);
         cout<<endl;
     }
     cout<<endl<<"rast:"<<endl;
     for(int i = 0 ; i<right_points.size();i++)
     {
-        print_vector_float((*all_points)[right_points[i]]);
+        print_vector_double((*all_points)[right_points[i]]);
     }
     */
     create_kd_tree_rec(tree, 2*index+1, (dimension+1)%Points_Dim ,all_points , left_points , left_boundries);
@@ -260,7 +309,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
 }
 
 
-    node * Create_KD_Tree(vector<vector<float>>* all_points)
+    node * Create_KD_Tree(vector<vector<double>>* all_points)
 {
     node * tree;
     int num_points = all_points->size();
@@ -272,7 +321,7 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
     node_boundries boundries;
     //shoud be implemented more efficinet
     vector<vector<bool>> temp_is_set (Points_Dim , vector<bool> (2, 0));
-    vector<vector<float>> temp_limits (Points_Dim , vector<float> (2, 0));
+    vector<vector<double>> temp_limits (Points_Dim , vector<double> (2, 0));
     boundries.is_set = temp_is_set;
     boundries.limits = temp_limits;
     for (int i = 0; i<Points_Dim;i++)
@@ -283,13 +332,14 @@ void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<floa
         }
     }
     create_kd_tree_rec(tree, 0, 0, all_points, sub_points_indices, boundries);
-    cout<<endl<<endl<<endl<<"kdtree cretaed";
+    //void create_kd_tree_rec(node* tree, int index, int dimension, vector<vector<double>> *all_points, vector<int>sub_points_indices, node_boundries boundries)
+    
     return tree;
 }
-float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float>reference, vector<float>query, int point_index)
+double examine_point (priority_queue<pair<double, int>>* queue, int k,vector<double>reference, vector<double>query, int point_index)
 {
     num_exam++;
-    float dist = calc_distance(reference , query , Euclidean);
+    double dist = calc_distance(reference , query , Euclidean);
     if ((*queue).size() < k)
     {
         (*queue).push(make_pair(dist, point_index));
@@ -299,8 +349,8 @@ float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float
         if (dist==0)
         {
             //cout<<"|||||||||||||||||||||||||||||||||||||||||||||||in sefr bood:"<<endl;
-            //print_vector_float(query);
-            //print_vector_float(reference);
+            //print_vector_double(query);
+            //print_vector_double(reference);
             //exit(0);
         }
         if (dist < (*queue).top().first)
@@ -315,9 +365,9 @@ float examine_point (priority_queue<pair<float, int>>* queue, int k,vector<float
 }
 
 
-void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>* knn, int root_index, float current_max_dist)
+void KNN_Exact_rec(vector<double> query, int k, priority_queue<pair<double, int>>* knn, int root_index, double current_max_dist)
 {
-    float max_dist = current_max_dist;
+    double max_dist = current_max_dist;
     //if (num==50) exit(0);
     //    cout<<"Starting fucntion call for "<<root_index<<endl;
     //    cout<<"after if";
@@ -403,10 +453,10 @@ void KNN_Exact_rec(vector<float> query, int k, priority_queue<pair<float, int>>*
 }
 
 
-void KNN_Exact(vector<float> query, int k, int*result)
+void KNN_Exact(vector<double> query, int k, int*result)
 {
     //int root_index = 0;
-    priority_queue<pair<float, int>> result_queue;
+    priority_queue<pair<double, int>> result_queue;
     KNN_Exact_rec(query, k , &result_queue, 0,0);
     int index = 0;
     while(result_queue.size())
@@ -417,12 +467,12 @@ void KNN_Exact(vector<float> query, int k, int*result)
 }
 
 
-float calc_distance (vector<float> v1, vector<float> v2, dist_metric type)
+double calc_distance (vector<double> v1, vector<double> v2, dist_metric type)
 {    
     if (type == Modified_Manhattan)
     {
-        float sum1 = 0;
-        float sum2 = 0;
+        double sum1 = 0;
+        double sum2 = 0;
         for(int i = 0; i<v1.size();i++)
             sum1+=v1[i];
         for(int i = 0; i<v2.size();i++)
@@ -431,7 +481,7 @@ float calc_distance (vector<float> v1, vector<float> v2, dist_metric type)
     }
     else
     {
-        float sum = 0;
+        double sum = 0;
         for(int i = 0; i<v1.size();i++)
         {
             if (type==Euclidean)
@@ -439,7 +489,7 @@ float calc_distance (vector<float> v1, vector<float> v2, dist_metric type)
             if (type==Manhattan)
             sum+= abs(v1[i] - v2[i]);
         }
-        float result = sum;
+        double result = sum;
         if (type == Euclidean)
             result = sqrt(result);
         return(result);
@@ -447,14 +497,14 @@ float calc_distance (vector<float> v1, vector<float> v2, dist_metric type)
 }
 
 
-bool line_circle_cross_check(float center_in_dimension , int line_dimension, bool up_or_down, bool is_set, float branchpoint, float radious)
+bool line_circle_cross_check(double center_in_dimension , int line_dimension, bool up_or_down, bool is_set, double branchpoint, double radious)
 {
     if (is_set == false) return true;
     if (up_or_down == false) return ((center_in_dimension - radious) <= branchpoint);
     else return ((center_in_dimension + radious) >= branchpoint);
 }
 
-bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, float radious)
+bool cross_check_cirlce_square(vector<double> center, node_boundries boundries, double radious)
 {
     for (int d = 0; d< Points_Dim; d++)
     {
@@ -468,7 +518,7 @@ bool cross_check_cirlce_square(vector<float> center, node_boundries boundries, f
 }
 
 
-int downward_search(node * tree,int start_index, vector<float> query)
+int downward_search(node * tree,int start_index, vector<double> query)
 {
     int index = start_index;
     while(!(tree[index].children_state == 3))
@@ -497,7 +547,7 @@ int downward_search(node * tree,int start_index, vector<float> query)
 }   
 
 
-    KD_Tree(vector<vector<float>>* all_points)
+    KD_Tree(vector<vector<double>>* all_points)
     {
         this->num_points = pow(2,floor(log2((*all_points).size()))+1);
         this->tree = Create_KD_Tree(all_points);
@@ -514,7 +564,7 @@ int downward_search(node * tree,int start_index, vector<float> query)
 struct thread_data
 {
     KD_Tree * tree;
-    vector<float> query;
+    vector<double> query;
     int * result;
     int query_index;
     int k;
@@ -528,38 +578,14 @@ void print_vector (vector<bool> v){
     cout<<endl;
 }
 
-Frame read_data (string file_adress, int points_dim, int output_dims, int num_points)
-{ 
-    //cout<<"read_data has been called"<<endl;
-    ifstream fin(file_adress, ios::binary);
-    fin.seekg(0, ios::end);
-    const size_t num_elements = fin.tellg() / sizeof(float);
-    fin.seekg(0, ios::beg);
-    Frame frame;
-    frame.points_dim = output_dims;
-    frame.num_points = num_elements/points_dim;
-    frame.num_points = num_points;
-    vector<float> data_temp(num_points*points_dim);
-    vector<vector<float>> data  (num_points , vector<float> (output_dims, 0));
-    fin.read(reinterpret_cast<char*>(&data_temp[0]), num_points*points_dim*sizeof(float));
-    for (size_t i = 0; i < frame.num_points; i++){
-        //cout<<i<<"'th point hasbeen read"<<endl;
-    for(size_t j = 0; j < frame.points_dim; j++)
-    {
-        data[i][j] = data_temp[i*points_dim + j];
-    }
-    
-}
-    frame.data = data;
-    return(frame);
-}
 
 
 
 
 
 
-void print_vector_2D (vector<vector<float>>input){
+
+void print_vector_2D (vector<vector<double>>input){
     for (int i = 0; i< input.size();i++)
     {
         for(int j = 0; j<input[0].size();j++)
@@ -588,9 +614,9 @@ void print_vector_2D_bool (vector<vector<bool>>input){
     int num_ref_points = (*reference).data.size();
     int num_query_points = (*query).data.size();
     vector<int> result(K);
-    vector<float>  distance (num_ref_points);
+    vector<double>  distance (num_ref_points);
     int i = index;
-        //cout<<"KNN, Progress:" <<(float)i/num_query_points<<"\n";
+        //cout<<"KNN, Progress:" <<(double)i/num_query_points<<"\n";
         for (int j = 0; j<num_ref_points;j++)
         {
             distance[j] = calc_distance((*query).data[i], (*reference).data[j], metric);
@@ -608,7 +634,7 @@ return(result);
 }*/
 
 
-/*int downward_search(node * tree, vector<float> query)
+/*int downward_search(node * tree, vector<double> query)
 {
     int index = 0;
     while(!(tree[index].children_state == 3))
@@ -637,193 +663,39 @@ void * KNN_KD_Tree (void* data)
 int main()
 {
 	int frame_channels = Points_Dim;
-    Frame reference = read_data("file_name_00000.bin", Points_Dim+1, frame_channels, fix_reference_size);
-    Frame query = read_data("0000000107.bin", Points_Dim+1, frame_channels, fix_query_size);
+    
+    Frame reference("reformed_dataset/0_gr.bin");
+    //cout<<endl<<reference.data.size();
+    
+    Frame query("reformed_dataset/1_gr.bin", 64);
+
+    //Frame query("reformed_dataset/0000000001_shuffle_cut.txt");
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
-    cout<<num_ref_points<<" "<<num_query_points<<endl;
-    exit(0);
+    //cout<<num_ref_points<<" "<<num_query_points<<endl;
+    //cout<<endl<<reference.data.size()<<" "<<reference.data[0].size();
+    //cout<<endl<<query.data.size()<<" "<<query.data[0].size();
+    //cout<<"values:"<<endl;
+    //cout<<endl<<query.data[3][0]<<endl;
+    //cout<<reference.data[3][2];
+    
+    //cout<<endl<<num_ref_points<<" "<<num_query_points<<endl;
     int num_query_points_orig = num_query_points;
-    num_query_points = fix_query_size;
-    int round_size = fix_query_size;
+    int round_size = fix_round_size;
     int round_num = num_query_points/round_size;
-    pthread_t* threads;
-    thread_data* data_for_threads;
     KD_Tree reference_tree(&(reference.data));
-    cout<<"the KDTreee has been created"<<endl;
-    //int k2 = 10;
-    //int * test_result = new int[k2];
-    //reference_tree.KNN_Exact(query.data[892], k2, test_result);
-    //cout<<endl;
-    //for (int i =0 ; i < 10; i++)
-    //{
-    //    cout<<test_result[i]<<" ";
-    //};
-    //exit(0);
-    int ** result = new int * [num_query_points];
-
-    int k = 50;
-    int num_temp_tets = 5120;
+    exit(0);
+    int num_temp_tets = 64;
     int ** result_temp = new int *[num_temp_tets];
-    int test_k = 20;
+    int test_k = 1;
     int num_exam_sum;
     double time_sum = 0;
+    double time_exact_sum = 0;
+    double runTime2;
     for (int q= 0 ; q< num_temp_tets;q++)
     {
-        //cout<<endl<<q;
         result_temp[q] = new int[test_k];
-        num_exam = 0;
-        double runTime2 = -omp_get_wtime();
-        reference_tree.KNN_Exact(query.data[q],test_k, result_temp[q]);
-        runTime2 += omp_get_wtime();
-        time_sum+= runTime2;
-        num_exam_sum +=num_exam;
-        cout<<num_exam<<endl;
-        //void KNN_Exact(vector<float> query, int k, int*result)
-    }
-    cout<<endl<<num_exam_sum / num_temp_tets<<endl;
-    cout<<endl<<time_sum / num_temp_tets<<endl;
-    exit(0);
-    double runTime = -omp_get_wtime();
-    for (int round = 0 ; round < round_num; round++)
-    {
-        threads = new pthread_t[round_size];
-        data_for_threads = new thread_data[round_size];
-        for (int t = 0 ; t < round_size; t++)
-        {
-            data_for_threads[t].tree = &reference_tree;
-            data_for_threads[t].query = query.data[round*round_size + t];
-            result[round*round_size+t] = new int[k];
-            data_for_threads[t].result = result[round*round_size + t];
-            data_for_threads[t].k = k;
-            data_for_threads[t].query_index = round*round_size + t;
-        }
-        for (int t = 0 ; t<round_size;t++)
-        {
-            pthread_create(&(threads[t]), NULL, KNN_KD_Tree, (void*)(&data_for_threads[t]));
-        }
-        for (int t = 0; t <round_size; t++)
-        {
-            pthread_join(threads[t], NULL);
-        }
-
-
-
-
-
-
-        delete[] threads;
-        delete[] data_for_threads;
-
-
-    }
-runTime +=omp_get_wtime();
-cout<<endl<<runTime<<endl;
-
-
-exit(0);
-cout<<endl<<runTime<<endl;
-    cout<<endl;
-
-for (int i = 0 ; i < 10; i++)
-{
-    for (int j = 0 ; j < k ; j++)
-    {
-        cout<<result[i][j]<<" ";
-    }
-    cout<<endl;
-}
-
-
-
-
-
-
-/*
-
-
-
-    int num_points = 12	;
-    print_vector_float(reference.data[0]);
-    
- 
-    print_vector_float(query.data[0]);
-    print_vector_float(reference.data[0]);
-    
-
-    
-    //print_vector_int(test_tree.KNN_Exact({78.372 , 8.078 ,2.873}, 20));
-    //print_vector_int(test_tree.KNN_Exact(query.data[0], 20));
-    
-    for (int test = 1 ; test < 512; test++)
-    {
-
-        cout<<endl<<"test%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<"testing"<< test<<"'th point ";
-     kd_result = test_tree.KNN_Exact(query.data[test], k);
-     cout<<"number of points examined: "<<endl<<num_exam;
-     exit(0);
-     correct_result = KNN_one_row(&reference, &query, k , Euclidean, test);
-     if (test==20)
-        {
-            print_vector_int(kd_result);
-            print_vector_int(correct_result);
-            exit(0);
-        }
-     bool found;   
-     int score_in = 0;
-     for (int i = 0 ; i < k ; i++)
-     {
-        found = false;
-        cout<<endl;
-        for (int j = 0 ; j < k ; j++)
-        {
-            cout<<endl<<(kd_result[i] == correct_result[j]);
-            if (kd_result[i] == correct_result[j]) found = true;
-        }
-        if (found) score_in++;
-        
-     }
-     if (score_in == k) score++;
-    }
-    cout<<endl<<score;
-    exit(0);
-    
-
-
-
-
-    cout<<"final result"<<endl;
-
-    exit(0);
-
-    //KD_Tree test_tree(&test_points);
-    runTime +=omp_get_wtime();
-    cout<<runTime;
-    //cout<<endl<<"result: "<<downward_search(test_tree.tree, {-2,7,9});
-
-    exit(0);
-
-    //node * tree = Create_KD_Tree(&(reference.data));
-    cout<<endl<<"The KD-Tree Has been Created"<<endl;
-    for (int i = 0 ; i < test_tree.num_points;i++)
-    {
-        
-        if (test_tree.tree[i].is_set)
-        {
-        cout<<endl<<i<<"'th node:"<<endl;
-        cout<<test_tree.tree[i].dimension<<endl;
-        cout<<test_tree.tree[i].branchpoint<<endl;
-        print_vector_float(test_tree.tree[i].point);
-        //exit(0);
-        print_vector_2D(test_tree.tree[i].boundries.limits);
-        cout<<endl;
-        //print_vector_2D_bool(test_tree.tree[i].boundries.is_set);
+        reference_tree.KNN_Exact(query.data[q],test_k, result_temp[q]);       
     }
 
-    }
-
-    
-    //node * tree = Create_KD_Tree(&(reference.data));
-*/
-	return 0;
 }
