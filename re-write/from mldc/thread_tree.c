@@ -658,7 +658,7 @@ int main()
     int num_ref_points = reference.num_points;
     int num_query_points = query.num_points;
     //use defined:
-    int num_queries_to_be_processesd = 2;
+    int num_queries_to_be_processesd = 64;
     int max_job_index = num_queries_to_be_processesd -1;
     
     //*****************************************************
@@ -846,11 +846,13 @@ int main()
         pthread_join((threads[t]),NULL);
     }
     cout<<endl;
+    cout<<"before evaluating"<<endl;
+    
     
     int score = 0;
     for (int i = 0; i <=max_job_index;i++ )
     {
-        //cout<<i<<" "<<query_projected[i]<<endl;
+        
      
         if (abs(NN_result[i] - binary_search(reference.data, query_projected[i], 0, num_ref_points -1)) == 1 )
         {
@@ -862,7 +864,7 @@ int main()
                 score++;
             else
             {
-                //cout<<reference.data[NN_result[i]][point_dim] <<" " <<reference.data[binary_search(reference.data, query_projected[i], 0, num_ref_points -1)][point_dim]<<endl;
+                cout<<reference.data[NN_result[i]][point_dim] <<" " <<reference.data[binary_search(reference.data, query_projected[i], 0, num_ref_points -1)][point_dim]<<endl;
                 cout<<i<<" "<<NN_result[i] <<" " <<binary_search(reference.data, query_projected[i], 0, num_ref_points -1)<<endl;
 
             }
