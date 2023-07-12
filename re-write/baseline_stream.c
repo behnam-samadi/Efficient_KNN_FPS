@@ -594,7 +594,7 @@ int main()
     int num_ref_points = reference.data.size();
     int num_query_points = query.data.size();
     int num_query_points_orig = num_query_points;
-    int k = 50; 
+    int k = 5; 
     int last_job = 0;
     int **result = new int*[test_size];
     for (int test = 0 ; test < test_size; test++)
@@ -622,6 +622,8 @@ int main()
         {
             pthread_join(threads[t], NULL);
         }
+        
+        cout<<endl<<"----------------   Evaluatoin: ----------------------"<<endl;
         
 vector<int> correct_result;
     for (int i = 0 ; i<test_size;i++)

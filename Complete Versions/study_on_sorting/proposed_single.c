@@ -65,6 +65,44 @@ public:
             data[i] = (temp+i*(point_dim+1));
         }
     }
+    void create_reference_data()
+    {
+    vector<double> reference_projected(num_points);
+    for (int i =0 ; i<num_points;i++)
+    {
+        reference_projected[i] = 0;
+        for (int j = 0; j<point_dim;j++)
+        {
+        reference_projected[i] += row_data[i][j];
+        }
+    }
+    vector<int> reference_order(num_points);
+    iota(reference_order.begin(),reference_order.end(),0); //Initializing
+    sort( reference_order.begin(),reference_order.end(), [&](int i,int j){return reference_projected[i]<reference_projected[j];} );
+    double sum;
+    for (int i = 0; i<num_points;i++)
+    {
+        sum = 0;
+        for (int j = 0; j<point_dim;j++)
+        {
+            data[i][j] = row_data[reference_order[i]][j];
+            sum += data[i][j];
+        }
+        data[i][point_dim] = sum;
+    }
+    }
+
+    void create_query_data(vector<double>* query_projected)
+    {
+        for (int i =0 ; i<num_points;i++)
+    {
+        (*query_projected)[i] = 0;
+        for (int j = 0; j<point_dim;j++)
+        {
+        (*query_projected)[i] += row_data[i][j];
+        }
+    }
+    }
 };
 
 
@@ -637,57 +675,22 @@ int main()
 {
 
     int frame_channels = 3;
-    Frame reference("reformed_dataset/0_gr.bin");
-    //cout<<"frame one read"<<endl;
-    Frame query("reformed_dataset/1_gr.bin");
-    //cout<<endl<<query.row_data[3][0]<<endl;
-    cout<<query.row_data[3][2];
+    //Frame reference("reformed_dataset/0_gr.bin");
+    //Frame query("reformed_dataset/1_gr.bin");
+    Frame reference("reformed_dataset/rad_and_black_0.bin");
+    Frame query("reformed_dataset/rad_and_black_1.bin");
     int num_ref_points = reference.num_points;
     int num_query_points = query.num_points;
     int num_query_points_orig = num_query_points;
     int round_size = fix_round_size;
     int round_num = num_query_points/round_size;
-       vector<double> reference_projected(num_ref_points);
     vector<double> query_projected(num_query_points);
-    for (int i =0 ; i<num_ref_points;i++)
-    {
-        reference_projected[i] = 0;
-        for (int j = 0; j<point_dim;j++)
-        {
-        reference_projected[i] += reference.row_data[i][j];
-        }
-    }
-    vector<int> reference_order(num_ref_points);
-    iota(reference_order.begin(),reference_order.end(),0); //Initializing
-    sort( reference_order.begin(),reference_order.end(), [&](int i,int j){return reference_projected[i]<reference_projected[j];} );
-    double sum;
-    for (int i = 0; i<num_ref_points;i++)
-    {
-        sum = 0;
-        for (int j = 0; j<point_dim;j++)
-        {
-            reference.data[i][j] = reference.row_data[reference_order[i]][j];
-            sum += reference.data[i][j];
-        }
-        reference.data[i][point_dim] = sum;
-    }
-    
-    for (int i =0 ; i<num_query_points;i++)
-    {
-        query_projected[i] = 0;
-        for (int j = 0; j<point_dim;j++)
-        {
-        query_projected[i] += query.row_data[i][j];
-        }
-    }
-    //print_double_2d(reference.data, reference.num_points, point_dim+1);
-    vector<int> query_order(num_query_points);
-    iota(query_order.begin(),query_order.end(),0); //Initializing
-    //sort( query_order.begin(),query_order.end(), [&](int i,int j){return query_projected[i]<query_projected[j];} );
-    //sort( query_projected.begin(),query_projected.end());
-    
+    reference.create_reference_data();
+    query.create_query_data(&query_projected);
     int K_test = 5;
     int num_temp_tets = query.num_points;
+    num_temp_tets = 2000;
+    
     vector<vector<int>> result_test  (num_temp_tets , vector<int> (K_test, 0));
     int score = 0;
     int num_calc_dis_test = 0;
@@ -695,74 +698,24 @@ int main()
     double avg_ex_time = 0;
     double test_time;
     bool is_in = false;
-    //exit(0);
-    double sum_local_Search_time;
-    double sum_binary_Search_time;
-    queue<int> * nearest_indices = new queue<int>[reference.num_points];
+    double binary_search_time, local_scan_time;
+    double whole_time = -omp_get_wtime();
     for (int q= 0 ; q< num_temp_tets;q++)
     {
-        //cout<<endl<<"test_number: "<<q<<endl;    
-        double binary_search_time = -omp_get_wtime();
+        cout<<"test numbr"<<q<<endl;
+        binary_search_time = -omp_get_wtime();
         int nearest_index = binary_search (reference.data,query_projected[q], 0, num_ref_points);
-        nearest_indices[nearest_index].push(q);
         binary_search_time += omp_get_wtime();
-        sum_binary_Search_time += binary_search_time;
+        local_scan_time = -omp_get_wtime();
+        exact_knn_projected(&result_test,&reference,query.row_data[q],query_projected[q], nearest_index, K_test, q,num_ref_points);
+        local_scan_time += omp_get_wtime();
+        //cout<<endl<<q<<" Ratio:"<<binary_search_time/local_scan_time;
     }
-    int q;
-    for (int q2 = 0; q2<reference.num_points;q2++)
-    {
-        cout<<"test number: "<<q2<<endl;
-        while (nearest_indices[q2].size())
-        {
-            q = nearest_indices[q2].front();
-            nearest_indices[q2].pop();
-            double local_search_time = -omp_get_wtime();
-            exact_knn_projected(&result_test,&reference,query.row_data[query_order[q]],query_projected[q], q2, K_test, q,num_ref_points);
-            local_search_time += omp_get_wtime();
-            sum_local_Search_time += local_search_time;
-            vector<int> ground_truth = KNN_one_row (&reference, &query,  K_test,Euclidean, q);
-        for (int k1 =0 ; k1<K_test; k1++)
-        {
-            is_in = false;
-            for (int k2 = 0 ; k2<K_test;k2++)
-            {
-                if (result_test[q][k1] == ground_truth[k2])
-                {
-                    is_in = true;
-                    break;
-                }
-            }
-            if (is_in) score++;
-        }
-            //vector<int> ground_truth = KNN_one_row (&reference, &query,  K_test,Euclidean, q);
-        }
-        //double local_search_time = -omp_get_wtime();
-        //exact_knn_projected(&result_test,&reference,query.row_data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
-        //local_search_time += omp_get_wtime();
-        //sum_local_Search_time += local_search_time;
+    whole_time += omp_get_wtime();
+    cout<<endl<<"whole time: "<<whole_time<<endl;
 
-    }
-        /*vector<int> ground_truth = KNN_one_row (&reference, &query,  K_test,Euclidean, q);
-
-        for (int k1 =0 ; k1<K_test; k1++)
-        {
-            is_in = false;
-            for (int k2 = 0 ; k2<K_test;k2++)
-            {
-                if (result_test[q][k1] == ground_truth[k2])
-                {
-                    is_in = true;
-                    break;
-                }
-            }
-            if (is_in) score++;
-        }*/
-
-
-    
-cout<<endl<<"time report:"<<endl<<"sum_local_Search_time: "<<sum_local_Search_time<<endl<<"sum_binary_Search_time :"<<sum_binary_Search_time<<endl<<"Ratio: "<<sum_local_Search_time/sum_binary_Search_time;
-
-//exit(0)            ;
+    //cout<<endl<<"score :"<<score<<endl;
+exit(0)            ;
 
 
         //inja

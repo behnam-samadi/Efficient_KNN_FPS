@@ -637,9 +637,11 @@ int main()
 {
 
     int frame_channels = 3;
-    Frame reference("reformed_dataset/0_gr.bin");
-    //cout<<"frame one read"<<endl;
-    Frame query("reformed_dataset/1_gr.bin");
+    //Frame reference("reformed_dataset/0_gr.bin");
+    //Frame query("reformed_dataset/1_gr.bin");
+    Frame reference("reformed_dataset/rad_and_black_0.bin");
+    Frame query("reformed_dataset/rad_and_black_1.bin");
+
     //cout<<endl<<query.row_data[3][0]<<endl;
     cout<<query.row_data[3][2];
     int num_ref_points = reference.num_points;
@@ -688,6 +690,7 @@ int main()
     
     int K_test = 5;
     int num_temp_tets = query.num_points;
+    num_temp_tets = 2000;
     vector<vector<int>> result_test  (num_temp_tets , vector<int> (K_test, 0));
     int score = 0;
     int num_calc_dis_test = 0;
@@ -698,69 +701,45 @@ int main()
     //exit(0);
     double sum_local_Search_time;
     double sum_binary_Search_time;
+
     queue<int> * nearest_indices = new queue<int>[reference.num_points];
+    double whole_time = -omp_get_wtime();
+    
     for (int q= 0 ; q< num_temp_tets;q++)
     {
         //cout<<endl<<"test_number: "<<q<<endl;    
         double binary_search_time = -omp_get_wtime();
         int nearest_index = binary_search (reference.data,query_projected[q], 0, num_ref_points);
-        nearest_indices[nearest_index].push(q);
+        //nearest_indices[nearest_index].push(q);
         binary_search_time += omp_get_wtime();
         sum_binary_Search_time += binary_search_time;
     }
+    
     int q;
+    int test_number;
+
     for (int q2 = 0; q2<reference.num_points;q2++)
     {
         cout<<"test number: "<<q2<<endl;
         while (nearest_indices[q2].size())
         {
+            cout<<"test number: "<<test_number<<endl;
+            test_number++;
             q = nearest_indices[q2].front();
             nearest_indices[q2].pop();
             double local_search_time = -omp_get_wtime();
             exact_knn_projected(&result_test,&reference,query.row_data[query_order[q]],query_projected[q], q2, K_test, q,num_ref_points);
             local_search_time += omp_get_wtime();
             sum_local_Search_time += local_search_time;
-            vector<int> ground_truth = KNN_one_row (&reference, &query,  K_test,Euclidean, q);
-        for (int k1 =0 ; k1<K_test; k1++)
-        {
-            is_in = false;
-            for (int k2 = 0 ; k2<K_test;k2++)
-            {
-                if (result_test[q][k1] == ground_truth[k2])
-                {
-                    is_in = true;
-                    break;
-                }
-            }
-            if (is_in) score++;
         }
-            //vector<int> ground_truth = KNN_one_row (&reference, &query,  K_test,Euclidean, q);
-        }
-        //double local_search_time = -omp_get_wtime();
-        //exact_knn_projected(&result_test,&reference,query.row_data[query_order[q]],query_projected[q], nearest_index, K_test, q,num_ref_points);
-        //local_search_time += omp_get_wtime();
-        //sum_local_Search_time += local_search_time;
-
+        
     }
-        /*vector<int> ground_truth = KNN_one_row (&reference, &query,  K_test,Euclidean, q);
+    whole_time += omp_get_wtime();
+    cout<<"whole_time: "<<whole_time<<endl;
 
-        for (int k1 =0 ; k1<K_test; k1++)
-        {
-            is_in = false;
-            for (int k2 = 0 ; k2<K_test;k2++)
-            {
-                if (result_test[q][k1] == ground_truth[k2])
-                {
-                    is_in = true;
-                    break;
-                }
-            }
-            if (is_in) score++;
-        }*/
-
-
+exit(0);
     
-cout<<endl<<"time report:"<<endl<<"sum_local_Search_time: "<<sum_local_Search_time<<endl<<"sum_binary_Search_time :"<<sum_binary_Search_time<<endl<<"Ratio: "<<sum_local_Search_time/sum_binary_Search_time;
+//cout<<endl<<"time report:"<<endl<<"sum_local_Search_time: "<<sum_local_Search_time<<endl<<"sum_binary_Search_time :"<<sum_binary_Search_time<<endl<<"Ratio: "<<sum_local_Search_time/sum_binary_Search_time;
 
 //exit(0)            ;
 
